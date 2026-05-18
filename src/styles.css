@@ -2681,6 +2681,45 @@ a {
     width: 100%;
     border-left: 0;
   }
+
+  /* Ensure product name sits above price and doesn't overlap the image */
+  .products-grid .product-card {
+    min-height: auto;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .product-visual {
+    height: auto;
+    margin-bottom: 8px;
+  }
+
+  .product-visual img {
+    max-height: 90px;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .product-meta {
+    margin-top: 0;
+  }
+
+  .product-meta h3 {
+    font-size: 13px;
+    margin: 0 0 6px 0;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .price-row {
+    margin-top: 6px;
+  }
 }
 
 /* Additional Mobile Responsive Styles */

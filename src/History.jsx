@@ -8,16 +8,20 @@ function formatPrice(value) {
 function getUnitForCategory(category) {
   if (!category) return 'kg';
   const cat = String(category).toLowerCase();
-  if (cat.includes('water') || cat.includes('juice') || cat.includes('dairy') || cat.includes('milk')) {
-    return 'L';
-  }
+  if (cat.includes('water') || cat.includes('juice')) return 'L';
   return 'kg';
 }
+
 
 function formatQuantity(quantity, category) {
   const numericQuantity = Number(quantity || 0);
   const unit = getUnitForCategory(category);
-  return `${numericQuantity} ${unit}`;
+  const cat = String(category || '').toLowerCase();
+  const fmt = Number.isInteger(numericQuantity) ? String(numericQuantity) : String(parseFloat(numericQuantity.toFixed(3)));
+  if (cat.includes('dairy') || cat.includes('milk')) {
+    return fmt;
+  }
+  return `${fmt} ${unit}`;
 }
 
 function formatDate(value) {
