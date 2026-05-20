@@ -206,13 +206,18 @@ function isUuid(value) {
 }
 
 async function getSupabaseUserId() {
-  const { data, error } = await supabase.auth.getUser();
+  try {
+    const { data, error } = await supabase.auth.getUser();
 
-  if (error || !isUuid(data?.user?.id)) {
+    if (error || !isUuid(data?.user?.id)) {
+      return '';
+    }
+
+    return data.user.id;
+  } catch (err) {
+    console.warn('Supabase getUser threw:', err?.message || err);
     return '';
   }
-
-  return data.user.id;
 }
 
 function buildHistoryOrders(rows, productById) {
@@ -574,16 +579,32 @@ function App() {
           return;
         }
 
-        const [wishlistResponse, historyResponse] = await Promise.all([
-          supabase.from(WISHLIST_TABLE).select('product_id').eq('user_id', userId),
-          supabase.from(HISTORY_TABLE).select('id, product_id, quantity, date').eq('user_id', userId).order('date', { ascending: false }),
-        ]);
+        let wishlistResponse = { data: [], error: null };
+        let historyResponse = { data: [], error: null };
+
+        try {
+          wishlistResponse = await supabase.from(WISHLIST_TABLE).select('product_id').eq('user_id', userId);
+        } catch (err) {
+          console.warn('Wishlist fetch threw:', err?.message || err);
+        }
+
+        try {
+          historyResponse = await supabase.from(HISTORY_TABLE).select('id, product_id, quantity, date').eq('user_id', userId).order('date', { ascending: false });
+        } catch (err) {
+          console.warn('History fetch threw:', err?.message || err);
+        }
 
         if (!isMounted) {
           return;
         }
 
-        if (!wishlistResponse.error && Array.isArray(wishlistResponse.data)) {
+        if (wishlistResponse?.error) {
+          if (wishlistResponse.error?.status === 404) {
+            console.info('Wishlist table not found on Supabase; skipping wishlist sync.');
+          } else {
+            console.warn('Wishlist fetch error:', wishlistResponse.error);
+          }
+        } else if (Array.isArray(wishlistResponse.data)) {
           const nextWishlistItems = {};
 
           wishlistResponse.data.forEach((row) => {
@@ -599,7 +620,13 @@ function App() {
           lastWishlistSyncSignatureRef.current = Object.keys(nextWishlistItems).sort().join('|');
         }
 
-        if (!historyResponse.error && Array.isArray(historyResponse.data) && historyResponse.data.length > 0) {
+        if (historyResponse?.error) {
+          if (historyResponse.error?.status === 404) {
+            console.info('History table not found on Supabase; skipping history load.');
+          } else {
+            console.warn('History fetch error:', historyResponse.error);
+          }
+        } else if (Array.isArray(historyResponse.data) && historyResponse.data.length > 0) {
           setOrders(buildHistoryOrders(historyResponse.data, productById));
         }
       } catch (remoteLoadError) {

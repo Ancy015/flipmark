@@ -1,28 +1,13 @@
 import { useState } from 'react';
 import emailjs from "@emailjs/browser";
-const sendEmail = (e) => {
-  e.preventDefault();
 
-  emailjs
-    .sendForm(
-      " 4moni4x",
-      "vnea3gb",
-      e.target,
-      "FjyRvRu910frF64F9"
-    )
-    .then(() => {
-      setStatusMessage(
-        "Thanks for reaching out. Our team will get back to you shortly."
-      );
-    })
-    .catch((error) => {
-      console.log(error);
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
 
-      setStatusMessage(
-        "Failed to send message. Please try again."
-      );
-    });
-};
+function isEmailJsConfigured() {
+  return Boolean(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY);
+}
 const CONTACT_CHANNELS = [
   {
     label: 'Head Office',
@@ -43,6 +28,31 @@ const CONTACT_CHANNELS = [
 
 function Contact({ onNavigateHome }) {
   const [statusMessage, setStatusMessage] = useState('');
+
+  const sendEmail = (e) => {
+    e.preventDefault();
+    if (!isEmailJsConfigured()) {
+      console.warn('EmailJS not configured: set VITE_EMAILJS_SERVICE_ID, VITE_EMAILJS_TEMPLATE_ID, VITE_EMAILJS_PUBLIC_KEY');
+      setStatusMessage(
+        'Contact form is not configured. Set VITE_EMAILJS_SERVICE_ID, VITE_EMAILJS_TEMPLATE_ID and VITE_EMAILJS_PUBLIC_KEY in a .env file.'
+      );
+      return;
+    }
+
+    emailjs
+      .sendForm(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, e.target, EMAILJS_PUBLIC_KEY)
+      .then((response) => {
+        // EmailJS returns an object with status/text
+        console.info('EmailJSResponseStatus', response);
+        setStatusMessage('Thanks for reaching out. Our team will get back to you shortly.');
+      })
+      .catch((err) => {
+        console.error('EmailJS send failed:', err);
+        // Try to show helpful information returned by EmailJS
+        const friendly = (err && (err.text || err.statusText)) || 'Failed to send message. Please try again later.';
+        setStatusMessage(friendly);
+      });
+  };
 
   
 
