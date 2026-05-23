@@ -1,5 +1,13 @@
 import { useState } from 'react';
+import emailjs from "@emailjs/browser";
 
+const EMAILJS_SERVICE_ID = import.meta.env.VITE_EMAILJS_SERVICE_ID || '';
+const EMAILJS_TEMPLATE_ID = import.meta.env.VITE_EMAILJS_TEMPLATE_ID || '';
+const EMAILJS_PUBLIC_KEY = import.meta.env.VITE_EMAILJS_PUBLIC_KEY || '';
+
+function isEmailJsConfigured() {
+  return Boolean(EMAILJS_SERVICE_ID && EMAILJS_TEMPLATE_ID && EMAILJS_PUBLIC_KEY);
+}
 const CONTACT_CHANNELS = [
   {
     label: 'Head Office',
@@ -21,10 +29,32 @@ const CONTACT_CHANNELS = [
 function Contact({ onNavigateHome }) {
   const [statusMessage, setStatusMessage] = useState('');
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    setStatusMessage('Thanks for reaching out. Our team will get back to you shortly.');
+  const sendEmail = (e) => {
+    e.preventDefault();
+    if (!isEmailJsConfigured()) {
+      console.warn('EmailJS not configured: set VITE_EMAILJS_SERVICE_ID, VITE_EMAILJS_TEMPLATE_ID, VITE_EMAILJS_PUBLIC_KEY');
+      setStatusMessage(
+        'Contact form is not configured. Set VITE_EMAILJS_SERVICE_ID, VITE_EMAILJS_TEMPLATE_ID and VITE_EMAILJS_PUBLIC_KEY in a .env file.'
+      );
+      return;
+    }
+
+    emailjs
+      .sendForm(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, e.target, EMAILJS_PUBLIC_KEY)
+      .then((response) => {
+        // EmailJS returns an object with status/text
+        console.info('EmailJSResponseStatus', response);
+        setStatusMessage('Thanks for reaching out. Our team will get back to you shortly.');
+      })
+      .catch((err) => {
+        console.error('EmailJS send failed:', err);
+        // Try to show helpful information returned by EmailJS
+        const friendly = (err && (err.text || err.statusText)) || 'Failed to send message. Please try again later.';
+        setStatusMessage(friendly);
+      });
   };
+
+  
 
   return (
     <>
@@ -76,38 +106,33 @@ function Contact({ onNavigateHome }) {
             <p>Everything is kept in two clear boxes with space between them.</p>
           </div>
 
-          <form className="trending-card contact-box contact-message-box" onSubmit={handleSubmit}>
-            <div className="product-meta">
-              <span className="product-category">Message</span>
-              <h3>Send us a message</h3>
-
-              <div className="contact-form-grid contact-form-grid-two">
-                <label>
-                  Name
-                  <input type="text" name="name" placeholder="Name" required />
-                </label>
-                <label>
-                  Email
-                  <input type="email" name="email" placeholder="Email" required />
-                </label>
-                <label className="contact-message-field contact-message-span">
-                  Subject
-                  <input type="text" name="subject" placeholder="Subject" required />
-                </label>
-                <label className="contact-message-field contact-message-span">
-                  Message
-                  <textarea name="message" rows="6" placeholder="Message" required />
-                </label>
-              </div>
-
-              <div className="product-card-actions">
-                <button type="submit" className="primary-cta small-cta">
-                  Send
-                </button>
-              </div>
-
-              {statusMessage ? <p className="contact-status-message">{statusMessage}</p> : null}
+          <form className="trending-card contact-box contact-message-box" onSubmit={sendEmail}>
+            <div className="contact-form-grid contact-form-grid-two">
+              <label>
+                Name
+                <input type="text" name="name" placeholder="Name" required />
+              </label>
+              <label>
+                Email
+                <input type="email" name="email" placeholder="Email" required />
+              </label>
+              <label className="contact-message-field contact-message-span">
+                Subject
+                <input type="text" name="subject" placeholder="Subject" required />
+              </label>
+              <label className="contact-message-field contact-message-span">
+                Message
+                <textarea name="message" rows="6" placeholder="Message" required />
+              </label>
             </div>
+
+            <div className="product-card-actions">
+              <button type="submit" className="primary-cta small-cta">
+                Send
+              </button>
+            </div>
+
+            {statusMessage ? <p className="contact-status-message">{statusMessage}</p> : null}
           </form>
 
           <div className="categories-section-spacer">
