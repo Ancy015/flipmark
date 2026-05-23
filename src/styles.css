@@ -1603,6 +1603,218 @@ a {
   padding: 16px;
 }
 
+.otp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 66;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(12, 20, 12, 0.58);
+  backdrop-filter: blur(8px);
+}
+
+.otp-modal {
+  width: min(560px, calc(100vw - 32px));
+  border: 1px solid #d9d2c6;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 24px 64px rgba(9, 24, 9, 0.28);
+  overflow: hidden;
+  animation: modal-pop 0.22s ease;
+}
+
+.otp-modal-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 22px 18px;
+  background: linear-gradient(180deg, rgba(245, 250, 238, 0.98), rgba(255, 255, 255, 0.98));
+  border-bottom: 1px solid #ece5d8;
+}
+
+.otp-eyebrow {
+  margin: 0 0 6px;
+  color: #2f6e0d;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.otp-modal-header h2 {
+  margin: 0;
+  color: #1f281d;
+  font-size: clamp(24px, 3vw, 30px);
+  line-height: 1.1;
+}
+
+.otp-subtitle {
+  margin: 8px 0 0;
+  color: #6a655c;
+  line-height: 1.6;
+}
+
+.otp-close-btn {
+  flex: 0 0 auto;
+  border: 1px solid #d8d1c4;
+  background: #fff;
+  color: #5f5b54;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.otp-panel-body {
+  padding: 22px;
+  display: grid;
+  gap: 14px;
+}
+
+.otp-field-group {
+  display: grid;
+  gap: 8px;
+}
+
+.otp-field-label {
+  color: #3f433a;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.otp-phone-row {
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.otp-country-select,
+.otp-phone-input,
+.otp-digit-input {
+  border: 1px solid #ddd6cc;
+  border-radius: 14px;
+  background: #fff;
+  color: #314129;
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.otp-country-select:focus,
+.otp-phone-input:focus,
+.otp-digit-input:focus {
+  border-color: #7aa23a;
+  box-shadow: 0 0 0 4px rgba(122, 162, 58, 0.14);
+}
+
+.otp-country-select,
+.otp-phone-input {
+  min-height: 52px;
+  padding: 0 14px;
+  font-size: 15px;
+}
+
+.otp-country-select {
+  background-image: linear-gradient(180deg, #fff, #f9f7f2);
+}
+
+.otp-phone-input {
+  width: 100%;
+}
+
+.otp-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: 0;
+  border-radius: 999px;
+  min-height: 48px;
+  padding: 0 18px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(180deg, #ff9f1c, #f07f13);
+  box-shadow: 0 12px 28px rgba(240, 127, 19, 0.24);
+}
+
+.otp-primary-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+.otp-otp-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.otp-digit-input {
+  width: 100%;
+  min-height: 60px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.otp-digit-input::-webkit-outer-spin-button,
+.otp-digit-input::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
+.otp-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.otp-secondary-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.otp-text-btn {
+  border: 0;
+  background: transparent;
+  color: #2f6e0d;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.otp-text-btn:disabled {
+  cursor: not-allowed;
+  color: #8a9483;
+}
+
+.otp-countdown {
+  color: #6a655c;
+  font-size: 12px;
+}
+
+.otp-error-message {
+  margin: 0;
+  color: #b54848;
+  font-size: 13px;
+}
+
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .auth-modal {
   min-height: auto;
   padding: 0;
@@ -1627,6 +1839,31 @@ a {
 .auth-link {
   color: #2f6e0d;
   font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .otp-modal {
+    width: min(100%, calc(100vw - 20px));
+  }
+
+  .otp-modal-header,
+  .otp-panel-body {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .otp-phone-row {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
+  .otp-otp-grid {
+    gap: 8px;
+  }
+
+  .otp-digit-input {
+    min-height: 52px;
+    font-size: 18px;
+  }
 }
 
 .snackbar {

@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 import Home from './Home';
 import Contact from './Contact';
 import History from './History';
+import OtpVerificationModal from './OtpVerificationModal';
 
 const PRODUCTS_TABLE = 'product';
 const ORDERS_TABLE = 'orders';
@@ -281,6 +282,7 @@ function App() {
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [otpOpen, setOtpOpen] = useState(false);
   const [cartItems, setCartItems] = useState({});
   const [cartOpen, setCartOpen] = useState(false);
   const [cartPreviewOpen, setCartPreviewOpen] = useState(false);
@@ -763,10 +765,24 @@ function App() {
   const handleRemoveHistoryItem = async (historyId) => {
     if (!historyId) return;
 
+    // Try to get an authenticated Supabase user id. If none exists,
+    // still remove the item locally so the UI responds immediately.
     const userId = await getSupabaseUserId();
 
     if (!userId) {
-      pushSnackbar('Please sign in to modify history');
+      // Remove locally for unauthenticated users (local demo sessions)
+      setOrders((previous) => {
+        const next = previous
+          .map((order) => {
+            const nextItems = (order.items || []).filter((it) => String(it.historyId || '') !== String(historyId));
+            return { ...order, items: nextItems };
+          })
+          .filter((order) => Array.isArray(order.items) && order.items.length > 0);
+
+        return next;
+      });
+
+      pushSnackbar('Removed item from history');
       return;
     }
 
@@ -852,6 +868,19 @@ function App() {
   const openAuthModal = () => {
     setAuthMode(authUser ? 'login' : 'signup');
     setAuthOpen(true);
+  };
+
+  const openOtpModal = () => {
+    if (cartEntries.length === 0) {
+      pushSnackbar('Your cart is empty');
+      return;
+    }
+
+    setOtpOpen(true);
+  };
+
+  const handleOtpVerified = async () => {
+    await handleCheckout('Confirmed Order', { allowGuest: true });
   };
 
   const handleAuthSubmit = async (event) => {
@@ -1084,14 +1113,16 @@ function App() {
     }
   };
 
-  const handleCheckout = async (paymentMethod) => {
+  const handleCheckout = async (paymentMethod, options = {}) => {
+    const { allowGuest = false } = options;
+
     if (cartEntries.length === 0) {
       pushSnackbar('Your cart is empty');
       return;
     }
 
     // Prevent unauthenticated users from placing orders
-    if (!authUser) {
+    if (!authUser && !allowGuest) {
       pushSnackbar('Please sign in before placing an order');
       setAuthMode('login');
       setAuthOpen(true);
@@ -1602,6 +1633,9 @@ function App() {
             </div>
 
             <div className="checkout-actions">
+              <button type="button" className="place-order-btn" onClick={openOtpModal} disabled={cartEntries.length === 0}>
+                Confirm Order
+              </button>
               <button type="button" className="place-order-btn" onClick={handleRazorpayCheckout} disabled={cartEntries.length === 0}>
                 Pay with Razorpay
               </button>
@@ -1673,6 +1707,8 @@ function App() {
           </section>
         </div>
       ) : null}
+
+      <OtpVerificationModal open={otpOpen} onClose={() => setOtpOpen(false)} onVerified={handleOtpVerified} />
 
       {snackbar ? <div className="snackbar">{snackbar}</div> : null}
     </div>
