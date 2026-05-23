@@ -21,7 +21,7 @@ const PROMO_CODES = {
 const FALLBACK_IMAGE =
   'data:image/svg+xml;charset=UTF-8,' +
   encodeURIComponent(`
-    <svg xmlns="svghttp://www.w3.org/2000/" viewBox="0 0 640 480" role="img" aria-label="No image available">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-label="No image available">
       <defs>
         <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%" stop-color="#f4efe6" />
@@ -44,6 +44,12 @@ const BROWSE_CATEGORIES = [
   { name: 'Cereal', url: 'https://i1-e.pinimg.com/736x/88/b5/4d/88b54d96d591e6727186775099ead63b.jpg' },
   { name: 'dairy', url: 'https://i1-e.pinimg.com/736x/2c/e7/11/2ce711058a94302de93350453d712ce4.jpg' },
   { name: 'snacks', url: 'https://i1-e.pinimg.com/736x/a4/be/02/a4be02805f3cea603c8939b42f86a7bf.jpg' },
+  { name: 'masala', url: 'https://i.pinimg.com/736x/ae/aa/c8/aeaac82c8f2327dbe9b21d71ab360387.jpg' },
+  { name: 'dryfruits&nuts', url: 'https://i.pinimg.com/736x/e0/f1/02/e0f102e4f7080b4612a70646574a6784.jpg' },
+  { name: 'pickles', url: 'https://i.pinimg.com/1200x/f2/2c/39/f22c394f7968d4c8c9544424c90b8908.jpg' },
+  { name: 'icecream', url: 'https://i.pinimg.com/736x/70/0d/d0/700dd03b943e3544d92d766f1e650c4c.jpg' },
+  { name: 'cakes', url: ' https://i.pinimg.com/736x/e4/69/0e/e4690ed2422f22a485fc9e299eba9a46.jpg' },
+
 
 ];
 function formatPrice(value) {
