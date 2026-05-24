@@ -26,7 +26,7 @@ const CONTACT_CHANNELS = [
   },
 ];
 
-function Contact({ onNavigateHome }) {
+function Contact({ onNavigateHome, onNavigateProducts, onNavigateHistory }) {
   const [statusMessage, setStatusMessage] = useState('');
 
   const sendEmail = (e) => {
@@ -73,15 +73,19 @@ function Contact({ onNavigateHome }) {
             <button type="button" className="nav-link-button" onClick={onNavigateHome}>
               Home
             </button>
-            <a href="#products">Products</a>
-            <a href="#history">History</a>
+            <button type="button" className="nav-link-button" onClick={onNavigateProducts}>
+              Products
+            </button>
+            <button type="button" className="nav-link-button" onClick={onNavigateHistory}>
+              History
+            </button>
             <button type="button" className="nav-link-button active" aria-current="page">
               Contact
             </button>
           </nav>
 
           <div className="header-actions">
-            <button type="button" className="auth-link-button" onClick={onNavigateHome}>
+            <button type="button" className="auth-link-button" onClick={onNavigateProducts}>
               Back to shop
             </button>
           </div>

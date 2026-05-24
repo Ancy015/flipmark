@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from './supabase';
 import Home from './Home';
 import Contact from './Contact';
@@ -49,6 +49,8 @@ const BROWSE_CATEGORIES = [
   { name: 'pickles', url: 'https://i.pinimg.com/1200x/f2/2c/39/f22c394f7968d4c8c9544424c90b8908.jpg' },
   { name: 'icecream', url: 'https://i.pinimg.com/736x/70/0d/d0/700dd03b943e3544d92d766f1e650c4c.jpg' },
   { name: 'cakes', url: ' https://i.pinimg.com/736x/e4/69/0e/e4690ed2422f22a485fc9e299eba9a46.jpg' },
+  { name: 'fastfood', url: 'https://i.pinimg.com/1200x/23/6b/a5/236ba56962a3ba362a47fcbc634f206e.jpg' },
+  { name: 'streetfood', url: 'https://i.pinimg.com/236x/2b/b5/dc/2bb5dc75f9e9f3283e6a823aeabc85b2.jpg' },
 
 
 ];
@@ -272,6 +274,7 @@ function buildHistoryOrders(rows, productById) {
 
 function App() {
   const [activePage, setActivePage] = useState('home');
+  const [pendingScrollTarget, setPendingScrollTarget] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -327,6 +330,29 @@ function App() {
       new window.Notification(title, { body });
     }
   };
+
+  const navigateToPage = (page, scrollTarget = 'top') => {
+    setActivePage(page);
+    setPendingScrollTarget(scrollTarget);
+  };
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !pendingScrollTarget) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      if (pendingScrollTarget === 'products') {
+        document.getElementById('products')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      setPendingScrollTarget(null);
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [activePage, pendingScrollTarget]);
 
   useEffect(() => {
     let isMounted = true;
@@ -702,11 +728,7 @@ function App() {
 
   const handleCategoryJump = (categoryName) => {
     setActiveCategory(categories.includes(categoryName) ? categoryName : 'All');
-
-    const productsSection = document.getElementById('products');
-    if (productsSection) {
-      productsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    navigateToPage('home', 'products');
   };
 
   const handleAddToCart = (productId) => {
@@ -1184,27 +1206,41 @@ function App() {
 
   if (activePage === 'history') {
     return (
-      <History
-        orders={orders}
-        onNavigateHome={() => setActivePage('home')}
-        onRemoveHistoryItem={handleRemoveHistoryItem}
-      />
+      <div className="page-shell route-page route-page--history">
+        <History
+          orders={orders}
+          onNavigateHome={() => navigateToPage('home', 'top')}
+          onNavigateProducts={() => navigateToPage('home', 'products')}
+          onNavigateContact={() => navigateToPage('contact', 'top')}
+          onRemoveHistoryItem={handleRemoveHistoryItem}
+        />
+      </div>
     );
   }
 
   if (activePage === 'contact') {
-    return <Contact onNavigateHome={() => setActivePage('home')} />;
+    return (
+      <div className="page-shell route-page route-page--contact">
+        <Contact
+          onNavigateHome={() => navigateToPage('home', 'top')}
+          onNavigateProducts={() => navigateToPage('home', 'products')}
+          onNavigateHistory={() => navigateToPage('history', 'top')}
+        />
+      </div>
+    );
   }
 
   return (
-    <div className="page-shell">
+    <div className="page-shell route-page route-page--home">
       <Home
         categories={categories}
         trendingProducts={trendingProducts}
         products={products}
         onJumpToProducts={handleCategoryJump}
-        onNavigateContact={() => setActivePage('contact')}
-        onNavigateHistory={() => setActivePage('history')}
+        onNavigateHome={() => navigateToPage('home', 'top')}
+        onNavigateProducts={() => navigateToPage('home', 'products')}
+        onNavigateContact={() => navigateToPage('contact', 'top')}
+        onNavigateHistory={() => navigateToPage('history', 'top')}
         fallbackImage={FALLBACK_IMAGE}
         formatPrice={formatPrice}
         getCategoryImage={getCategoryImage}

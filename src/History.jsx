@@ -31,7 +31,7 @@ function formatDate(value) {
   return date.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function History({ orders = [], onNavigateHome, onRemoveHistoryItem }) {
+function History({ orders = [], onNavigateHome, onNavigateProducts, onNavigateContact, onRemoveHistoryItem }) {
   return (
     <>
       <header className="hero" id="history">
@@ -46,10 +46,18 @@ function History({ orders = [], onNavigateHome, onRemoveHistoryItem }) {
           </div>
 
           <nav className="main-nav" aria-label="Primary navigation">
-            <a href="#home" onClick={() => onNavigateHome?.()}>Home</a>
-            <a href="#products">Products</a>
-            <button type="button" className="nav-link-button active" aria-current="page">History</button>
-            <button type="button" className="nav-link-button" onClick={() => onNavigateHome?.()}>Contact</button>
+            <button type="button" className="nav-link-button" onClick={() => onNavigateHome?.()}>
+              Home
+            </button>
+            <button type="button" className="nav-link-button" onClick={() => onNavigateProducts?.()}>
+              Products
+            </button>
+            <button type="button" className="nav-link-button active" aria-current="page">
+              History
+            </button>
+            <button type="button" className="nav-link-button" onClick={() => onNavigateContact?.()}>
+              Contact
+            </button>
           </nav>
 
           <div className="header-actions">

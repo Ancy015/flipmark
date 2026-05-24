@@ -24,6 +24,8 @@ function Home({
   trendingProducts,
   products,
   onJumpToProducts,
+  onNavigateHome,
+  onNavigateProducts,
   onNavigateContact,
   onNavigateHistory,
   fallbackImage,
@@ -92,8 +94,12 @@ function Home({
           </div>
 
           <nav className="main-nav" aria-label="Primary navigation">
-            <a href="#home">Home</a>
-            <a href="#products">Products</a>
+            <button type="button" className="nav-link-button active" aria-current="page" onClick={onNavigateHome}>
+              Home
+            </button>
+            <button type="button" className="nav-link-button" onClick={onNavigateProducts}>
+              Products
+            </button>
             <button type="button" className="nav-link-button" onClick={onNavigateHistory}>
               History
             </button>
