@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { useEffect, useRef, useState } from 'react';
 import emailjs from '@emailjs/browser';
 
@@ -88,6 +89,10 @@ export default function OtpVerificationModal({ open, onClose, onVerified }) {
   }, [open, step]);
 
   if (!open) {
+    return null;
+  }
+
+  if (typeof document === 'undefined') {
     return null;
   }
 
@@ -214,7 +219,7 @@ export default function OtpVerificationModal({ open, onClose, onVerified }) {
 
   const canVerify = otpIsComplete && !isVerifying;
 
-  return (
+  const modalContent = (
     <div className="otp-modal-backdrop" role="presentation" onClick={onClose}>
       <section
         className="otp-modal"
@@ -304,4 +309,6 @@ export default function OtpVerificationModal({ open, onClose, onVerified }) {
       </section>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

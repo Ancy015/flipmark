@@ -9,6 +9,7 @@ function getUnitForCategory(category) {
   if (!category) return 'kg';
   const cat = String(category).toLowerCase();
   if (cat.includes('water') || cat.includes('juice')) return 'L';
+  if (cat.includes('pickles') || cat.includes('icecream') || cat.includes('cakes') || cat.includes('fastfood') || cat.includes('streetfood')) return '';
   return 'kg';
 }
 
@@ -18,10 +19,10 @@ function formatQuantity(quantity, category) {
   const unit = getUnitForCategory(category);
   const cat = String(category || '').toLowerCase();
   const fmt = Number.isInteger(numericQuantity) ? String(numericQuantity) : String(parseFloat(numericQuantity.toFixed(3)));
-  if (cat.includes('dairy') || cat.includes('milk')) {
+  if (cat.includes('dairy') || cat.includes('milk') || cat.includes('pickles') || cat.includes('icecream') || cat.includes('cakes') || cat.includes('fastfood') || cat.includes('streetfood')) {
     return fmt;
   }
-  return `${fmt} ${unit}`;
+  return unit ? `${fmt} ${unit}` : fmt;
 }
 
 function formatDate(value) {
@@ -31,7 +32,7 @@ function formatDate(value) {
   return date.toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-function History({ orders = [], onNavigateHome, onRemoveHistoryItem }) {
+function History({ orders = [], onNavigateHome, onNavigateProducts, onNavigateContact, onRemoveHistoryItem }) {
   return (
     <>
       <header className="hero" id="history">
@@ -46,10 +47,18 @@ function History({ orders = [], onNavigateHome, onRemoveHistoryItem }) {
           </div>
 
           <nav className="main-nav" aria-label="Primary navigation">
-            <a href="#home" onClick={() => onNavigateHome?.()}>Home</a>
-            <a href="#products">Products</a>
-            <button type="button" className="nav-link-button active" aria-current="page">History</button>
-            <button type="button" className="nav-link-button" onClick={() => onNavigateHome?.()}>Contact</button>
+            <button type="button" className="nav-link-button" onClick={() => onNavigateHome?.()}>
+              Home
+            </button>
+            <button type="button" className="nav-link-button" onClick={() => onNavigateProducts?.()}>
+              Products
+            </button>
+            <button type="button" className="nav-link-button active" aria-current="page">
+              History
+            </button>
+            <button type="button" className="nav-link-button" onClick={() => onNavigateContact?.()}>
+              Contact
+            </button>
           </nav>
 
           <div className="header-actions">
