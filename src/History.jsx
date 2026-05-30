@@ -9,6 +9,7 @@ function getUnitForCategory(category) {
   if (!category) return 'kg';
   const cat = String(category).toLowerCase();
   if (cat.includes('water') || cat.includes('juice')) return 'L';
+  if (cat.includes('pickles') || cat.includes('icecream') || cat.includes('cakes') || cat.includes('fastfood') || cat.includes('streetfood')) return '';
   return 'kg';
 }
 
@@ -18,10 +19,10 @@ function formatQuantity(quantity, category) {
   const unit = getUnitForCategory(category);
   const cat = String(category || '').toLowerCase();
   const fmt = Number.isInteger(numericQuantity) ? String(numericQuantity) : String(parseFloat(numericQuantity.toFixed(3)));
-  if (cat.includes('dairy') || cat.includes('milk')) {
+  if (cat.includes('dairy') || cat.includes('milk') || cat.includes('pickles') || cat.includes('icecream') || cat.includes('cakes') || cat.includes('fastfood') || cat.includes('streetfood')) {
     return fmt;
   }
-  return `${fmt} ${unit}`;
+  return unit ? `${fmt} ${unit}` : fmt;
 }
 
 function formatDate(value) {

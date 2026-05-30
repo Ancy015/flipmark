@@ -10,7 +10,6 @@ const ORDERS_TABLE = 'orders';
 const SORT_OPTIONS = ['default', 'price-asc', 'price-desc', 'name-asc'];
 const WISHLIST_TABLE = 'wishlist';
 const HISTORY_TABLE = 'history';
-const LOCAL_AUTH_KEY = 'flipmark-local-auth';
 const STORAGE_PREFIX = 'flipmark-state';
 const ORDER_STAGES = ['Confirmed', 'Packed', 'Out for delivery', 'Delivered'];
 const PROMO_CODES = {
@@ -124,27 +123,6 @@ function writeUserState(authUser, value) {
   window.localStorage.setItem(storageKey, JSON.stringify(value));
 }
 
-function readLocalAuthUser() {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  return safeParseJSON(window.localStorage.getItem(LOCAL_AUTH_KEY), null);
-}
-
-function writeLocalAuthUser(user) {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  if (!user) {
-    window.localStorage.removeItem(LOCAL_AUTH_KEY);
-    return;
-  }
-
-  window.localStorage.setItem(LOCAL_AUTH_KEY, JSON.stringify(user));
-}
-
 function createOrderId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
@@ -180,6 +158,7 @@ function getUnitForCategory(category) {
   if (!category) return 'kg';
   const cat = String(category).toLowerCase();
   if (cat.includes('water') || cat.includes('juice')) return 'L';
+  if (cat.includes('pickles') || cat.includes('icecream') || cat.includes('cakes') || cat.includes('fastfood') || cat.includes('streetfood')) return '';
   // treat dairy/milk as quantity-only (no unit displayed)
   return 'kg';
 }
@@ -189,10 +168,10 @@ function formatQuantity(quantity, category) {
   const unit = getUnitForCategory(category);
   const fmt = Number.isInteger(numericQuantity) ? String(numericQuantity) : String(parseFloat(numericQuantity.toFixed(3)));
   const cat = String(category || '').toLowerCase();
-  if (cat.includes('dairy') || cat.includes('milk') || cat.includes('snack')) {
+  if (cat.includes('dairy') || cat.includes('milk') || cat.includes('snack') || cat.includes('pickles') || cat.includes('icecream') || cat.includes('cakes') || cat.includes('fastfood') || cat.includes('streetfood')) {
     return fmt;
   }
-  return `${fmt} ${unit}`;
+  return unit ? `${fmt} ${unit}` : fmt;
 }
 
 function buildLineItems(cartEntries, formatPrice) {
@@ -292,6 +271,10 @@ function App() {
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState('');
   const [otpOpen, setOtpOpen] = useState(false);
+  const showOtp = otpOpen;
+  const setShowOtp = setOtpOpen;
+  const [otpFlow, setOtpFlow] = useState('checkout');
+  const [pendingOtpProduct, setPendingOtpProduct] = useState(null);
   const [cartItems, setCartItems] = useState({});
   const [cartOpen, setCartOpen] = useState(false);
   const [cartPreviewOpen, setCartPreviewOpen] = useState(false);
@@ -404,12 +387,6 @@ function App() {
     let isMounted = true;
 
     const bootstrapAuth = async () => {
-      const localUser = readLocalAuthUser();
-
-      if (localUser && !isUuid(localUser.id)) {
-        writeLocalAuthUser(null);
-      }
-
       try {
         const { data, error: sessionError } = await supabase.auth.getSession();
 
@@ -423,14 +400,12 @@ function App() {
 
         if (data?.session?.user) {
           setAuthUser(data.session.user);
-        } else if (localUser && isUuid(localUser.id)) {
-          setAuthUser(localUser);
+        } else {
+          setAuthUser(null);
         }
       } catch (authLookupError) {
-        if (localUser && isUuid(localUser.id)) {
-          setAuthUser(localUser);
-        }
-        console.warn('Auth bootstrap fell back to local session:', authLookupError);
+        setAuthUser(null);
+        console.warn('Auth bootstrap failed:', authLookupError);
       } finally {
         if (isMounted) {
           setAuthReady(true);
@@ -443,9 +418,10 @@ function App() {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setAuthUser(session.user);
-        writeLocalAuthUser(session.user);
         setAuthOpen(false);
         pushSnackbar(`Signed in as ${session.user.email || 'user'}`);
+      } else {
+        setAuthUser(null);
       }
     });
 
@@ -727,7 +703,10 @@ function App() {
   }, [authReady, authStorageKey, authUser, remoteDataHydratedKey, wishlistItems, wishlistSyncSignature]);
 
   const handleCategoryJump = (categoryName) => {
-    setActiveCategory(categories.includes(categoryName) ? categoryName : 'All');
+    // Match categories case-insensitively so browse tiles (which use lower-case keys)
+    // still select the right category even if products store a different casing.
+    const matched = categories.find((c) => String(c).toLowerCase() === String(categoryName).toLowerCase());
+    setActiveCategory(matched || 'All');
     navigateToPage('home', 'products');
   };
 
@@ -893,9 +872,22 @@ function App() {
 
   const accountLabel = authUser?.user_metadata?.full_name || authUser?.email || 'Guest';
 
+  useEffect(() => {
+    console.log('showOtp:', showOtp);
+  }, [showOtp]);
+
   const openAuthModal = () => {
-    setAuthMode(authUser ? 'login' : 'signup');
+    setAuthMode('login');
     setAuthOpen(true);
+  };
+
+  const handleOrder = (product) => {
+    console.log('Order button clicked');
+    console.log('showOtp:', showOtp);
+
+    setPendingOtpProduct(product);
+    setOtpFlow('single-order');
+    setShowOtp(true); // FIX: open the OTP modal before completing a single-item order.
   };
 
   const openOtpModal = () => {
@@ -904,11 +896,23 @@ function App() {
       return;
     }
 
-    setOtpOpen(true);
+    setPendingOtpProduct(null);
+    setOtpFlow('checkout');
+    setShowOtp(true); // FIX: keep checkout verification on the shared OTP modal.
   };
 
   const handleOtpVerified = async () => {
-    await handleCheckout('Confirmed Order', { allowGuest: true });
+    try {
+      if (otpFlow === 'single-order' && pendingOtpProduct) {
+        await placeOrder(pendingOtpProduct);
+      } else {
+        await handleCheckout('Confirmed Order', { allowGuest: true });
+      }
+    } finally {
+      setPendingOtpProduct(null);
+      setOtpFlow('checkout');
+      setShowOtp(false);
+    }
   };
 
   const handleAuthSubmit = async (event) => {
@@ -936,17 +940,15 @@ function App() {
           throw signUpError;
         }
 
-        const nextUser = data?.user || data?.session?.user;
-        if (nextUser) {
-          setAuthUser(nextUser);
-          writeLocalAuthUser(nextUser);
+        if (data?.session?.user) {
+          setAuthUser(data.session.user);
+          setAuthOpen(false);
+          setAuthForm({ name: '', email: '', password: '' });
+          pushSnackbar('Account created and signed in');
         } else {
-          const localUser = { id: crypto.randomUUID(), email, user_metadata: { full_name: name || email.split('@')[0] } };
-          setAuthUser(localUser);
-          writeLocalAuthUser(localUser);
+          setAuthError('Account created. Please verify your email, then sign in.');
+          pushSnackbar('Account created. Please sign in after verification.');
         }
-
-        pushSnackbar('Account created');
       } else {
         const { data, error: signInError } = await supabase.auth.signInWithPassword({
           email,
@@ -957,35 +959,19 @@ function App() {
           throw signInError;
         }
 
-        const nextUser = data?.user || data?.session?.user;
-        if (nextUser) {
-          setAuthUser(nextUser);
-          writeLocalAuthUser(nextUser);
-        } else {
-          const localUser = { id: crypto.randomUUID(), email, user_metadata: { full_name: name || email.split('@')[0] } };
-          setAuthUser(localUser);
-          writeLocalAuthUser(localUser);
+        if (!data?.session?.user) {
+          throw new Error('Login succeeded but no active session was returned by Supabase.');
         }
 
+        setAuthUser(data.session.user);
+        setAuthOpen(false);
+        setAuthForm({ name: '', email: '', password: '' });
         pushSnackbar('Signed in successfully');
       }
-
-      setAuthOpen(false);
-      setAuthForm({ name: '', email: '', password: '' });
     } catch (authSubmitError) {
-      const fallbackUser = {
-        id: crypto.randomUUID(),
-        email: email || 'guest@flipmark.local',
-        user_metadata: { full_name: name || (email ? email.split('@')[0] : 'Guest') },
-      };
-
-      console.warn('Auth flow fell back to local session:', authSubmitError);
-      setAuthError(authSubmitError?.message || 'Using a local demo session for this account.');
-      setAuthUser(fallbackUser);
-      writeLocalAuthUser(fallbackUser);
-      setAuthOpen(false);
-      setAuthForm({ name: '', email: '', password: '' });
-      pushSnackbar(authMode === 'signup' ? 'Created local demo account' : 'Opened local demo session');
+      // Surface Supabase error to the UI so users can see what went wrong.
+      console.warn('Auth submit failed:', authSubmitError);
+      setAuthError(authSubmitError?.message || JSON.stringify(authSubmitError));
     } finally {
       setAuthBusy(false);
     }
@@ -998,7 +984,6 @@ function App() {
       console.warn('Supabase sign out failed:', signOutError);
     }
 
-    writeLocalAuthUser(null);
     setAuthUser(null);
     setAuthOpen(false);
     setCartItems({});
@@ -1289,7 +1274,7 @@ function App() {
                       <button
                         type="button"
                         className="primary-cta small-cta"
-                        onClick={() => placeOrder(product)}
+                        onClick={() => handleOrder(product)}
                       >
                         Order
                       </button>
@@ -1343,7 +1328,7 @@ function App() {
                 onMouseEnter={() => setCartPreviewOpen(true)}
                 onMouseLeave={() => {
                   if (cartPreviewTimerRef.current) {
-                    window.clearTimeout(cartPreviewTimerRef.current);
+                    window.clearout(cartPreviewTimerRef.current);
                   }
 
                   cartPreviewTimerRef.current = window.setTimeout(() => setCartPreviewOpen(false), 140);
@@ -1498,7 +1483,7 @@ function App() {
                       <button
                         type="button"
                         className="primary-cta small-cta"
-                        onClick={() => placeOrder(product)}
+                        onClick={() => handleOrder(product)}
                       >
                         Order
                       </button>
@@ -1750,7 +1735,15 @@ function App() {
         </div>
       ) : null}
 
-      <OtpVerificationModal open={otpOpen} onClose={() => setOtpOpen(false)} onVerified={handleOtpVerified} />
+      <OtpVerificationModal
+        open={showOtp}
+        onClose={() => {
+          setPendingOtpProduct(null);
+          setOtpFlow('checkout');
+          setShowOtp(false); // FIX: close the shared OTP modal and clear the pending single-order state.
+        }}
+        onVerified={handleOtpVerified}
+      />
 
       {snackbar ? <div className="snackbar">{snackbar}</div> : null}
     </div>
