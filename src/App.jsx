@@ -4,6 +4,7 @@ import Home from './Home';
 import Contact from './Contact';
 import History from './History';
 import OtpVerificationModal from './OtpVerificationModal';
+import { usingFallbackSupabaseConfig } from './supabase';
 
 const PRODUCTS_TABLE = 'product';
 const ORDERS_TABLE = 'orders';
@@ -273,8 +274,7 @@ function App() {
   const [otpOpen, setOtpOpen] = useState(false);
   const showOtp = otpOpen;
   const setShowOtp = setOtpOpen;
-  const [otpFlow, setOtpFlow] = useState('checkout');
-  const [pendingOtpProduct, setPendingOtpProduct] = useState(null);
+  const [pendingOrder, setPendingOrder] = useState(null);
   const [cartItems, setCartItems] = useState({});
   const [cartOpen, setCartOpen] = useState(false);
   const [cartPreviewOpen, setCartPreviewOpen] = useState(false);
@@ -872,21 +872,34 @@ function App() {
 
   const accountLabel = authUser?.user_metadata?.full_name || authUser?.email || 'Guest';
 
-  useEffect(() => {
-    console.log('showOtp:', showOtp);
-  }, [showOtp]);
-
   const openAuthModal = () => {
     setAuthMode('login');
     setAuthOpen(true);
   };
 
   const handleOrder = (product) => {
-    console.log('Order button clicked');
-    console.log('showOtp:', showOtp);
+    if (!product?.id) {
+      pushSnackbar('Unable to start order for this product');
+      return;
+    }
 
-    setPendingOtpProduct(product);
-    setOtpFlow('single-order');
+    setPendingOrder({
+      source: 'single',
+      items: [
+        {
+          id: String(product.id),
+          name: product.name || 'Unnamed product',
+          category: product.category || 'Uncategorized',
+          quantity: 1,
+          price: Number(product.price || 0),
+          formattedPrice: formatPrice(product.price),
+        },
+      ],
+      subtotal: Number(product.price || 0),
+      discountAmount: 0,
+      total: Number(product.price || 0),
+      clearCart: false,
+    });
     setShowOtp(true); // FIX: open the OTP modal before completing a single-item order.
   };
 
@@ -896,23 +909,85 @@ function App() {
       return;
     }
 
-    setPendingOtpProduct(null);
-    setOtpFlow('checkout');
+    setPendingOrder({
+      source: 'cart',
+      items: cartEntries.map(({ product, quantity }) => ({
+        id: String(product.id),
+        name: product.name || 'Unnamed product',
+        category: product.category || 'Uncategorized',
+        quantity,
+        price: Number(product.price || 0),
+        formattedPrice: formatPrice(product.price),
+      })),
+      subtotal: cartTotal,
+      discountAmount,
+      total: payableTotal,
+      clearCart: true,
+    });
     setShowOtp(true); // FIX: keep checkout verification on the shared OTP modal.
   };
 
-  const handleOtpVerified = async () => {
-    try {
-      if (otpFlow === 'single-order' && pendingOtpProduct) {
-        await placeOrder(pendingOtpProduct);
-      } else {
-        await handleCheckout('Confirmed Order', { allowGuest: true });
-      }
-    } finally {
-      setPendingOtpProduct(null);
-      setOtpFlow('checkout');
-      setShowOtp(false);
+  const handleOtpVerified = async ({ email }) => {
+    if (!pendingOrder) {
+      throw new Error('No pending order found. Please start the order again.');
     }
+
+    const createdAt = Date.now();
+    const createdAtIso = new Date(createdAt).toISOString();
+    const userName = authUser?.user_metadata?.full_name || authUser?.email || email || 'Guest';
+    const orderRows = pendingOrder.items.map((item) => ({
+      user_id: authUser?.id || null,
+      user_name: userName,
+      product_id: String(item.id),
+      product_name: item.name || 'Unnamed product',
+      price: item.price,
+      quantity: item.quantity,
+      created_at: createdAtIso,
+    }));
+
+    const { error: insertError } = await supabase.from(ORDERS_TABLE).insert(orderRows);
+
+    if (insertError) {
+      console.error('Failed to save order:', insertError);
+      throw new Error(insertError.message || 'Unable to save your order right now. Please try again.');
+    }
+
+    const order = {
+      id: createOrderId(),
+      trackingCode: `FM-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+      createdAt,
+      items: pendingOrder.items.map((item) => ({
+        id: String(item.id),
+        historyId: String(item.id),
+        productId: String(item.id),
+        name: item.name,
+        category: item.category,
+        quantity: item.quantity,
+        price: item.price,
+        formattedPrice: formatPrice(item.price),
+      })),
+      subtotal: pendingOrder.subtotal,
+      discountAmount: pendingOrder.discountAmount,
+      total: pendingOrder.total,
+      paymentMethod: 'OTP verified',
+      status: 'Confirmed',
+      customer: userName,
+    };
+
+    setOrders((previousOrders) => [order, ...previousOrders]);
+
+    if (pendingOrder.clearCart) {
+      setCartItems({});
+      setAppliedPromoCode('');
+      setPromoCodeInput('');
+    }
+
+    setDrawerView('orders');
+    setCartOpen(true);
+    pushSnackbar('Order Confirmed Successfully');
+    notifyUser('Order placed', `${order.trackingCode} has been confirmed.`);
+
+    setPendingOrder(null);
   };
 
   const handleAuthSubmit = async (event) => {
@@ -971,7 +1046,20 @@ function App() {
     } catch (authSubmitError) {
       // Surface Supabase error to the UI so users can see what went wrong.
       console.warn('Auth submit failed:', authSubmitError);
-      setAuthError(authSubmitError?.message || JSON.stringify(authSubmitError));
+      const rawMessage = authSubmitError?.message || JSON.stringify(authSubmitError);
+      const normalizedMessage = String(rawMessage || '').toLowerCase();
+
+      if (normalizedMessage.includes('invalid login credentials')) {
+        setAuthError(
+          usingFallbackSupabaseConfig
+            ? 'Invalid login credentials for the fallback Supabase project. Make sure this email/password belongs to the same project, or set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY for your own project.'
+            : 'Invalid login credentials. Double-check the email/password, or sign up first if this account does not exist yet.',
+        );
+      } else if (normalizedMessage.includes('email not confirmed')) {
+        setAuthError('Your account was created, but the email is not verified yet. Check your inbox and confirm it, then log in again.');
+      } else {
+        setAuthError(rawMessage);
+      }
     } finally {
       setAuthBusy(false);
     }
@@ -1022,170 +1110,6 @@ function App() {
     setAppliedPromoCode(code);
     pushSnackbar(`Applied ${code}`);
   };
-
-  const scheduleOrderStatusUpdates = (orderId) => {
-    const stagedUpdates = [
-      { delay: 15000, status: 'Packed' },
-      { delay: 30000, status: 'Out for delivery' },
-      { delay: 45000, status: 'Delivered' },
-    ];
-
-    stagedUpdates.forEach(({ delay, status }) => {
-      const timerId = window.setTimeout(() => {
-        setOrders((previousOrders) =>
-          previousOrders.map((order) => {
-            if (order.id !== orderId) {
-              return order;
-            }
-
-            const nextOrder = { ...order, status };
-            notifyUser('Order update', `${order.trackingCode} is now ${status}.`);
-            return nextOrder;
-          }),
-        );
-      }, delay);
-
-      orderTimersRef.current.push(timerId);
-    });
-  };
-
-  const placeOrder = async (product) => {
-    if (!product?.id) {
-      return;
-    }
-
-    const userId = await getSupabaseUserId();
-
-    if (!userId) {
-      alert('Please login first');
-      return;
-    }
-
-    const orderCreatedAt = Date.now();
-    const order = {
-      id: createOrderId(),
-      trackingCode: `FM-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
-      createdAt: orderCreatedAt,
-      items: [
-        {
-          id: String(product.id),
-          name: product.name || 'Unnamed product',
-          category: product.category || 'Uncategorized',
-          quantity: 1,
-          price: Number(product.price || 0),
-          formattedPrice: formatPrice(product.price),
-        },
-      ],
-      subtotal: Number(product.price || 0),
-      discountAmount: 0,
-      total: Number(product.price || 0),
-      paymentMethod: 'Direct order',
-      status: 'Confirmed',
-      customer: accountLabel,
-    };
-
-    const { error: insertError } = await supabase.from(ORDERS_TABLE).insert([
-      {
-        user_id: userId,
-        product_id: product.id,
-        quantity: 1,
-        created_at: new Date(orderCreatedAt).toISOString(),
-      },
-    ]);
-
-    if (insertError) {
-      console.error('Failed to insert order:', insertError);
-      alert(insertError.message || 'Unable to place order');
-      return;
-    }
-
-    setOrders((previousOrders) => [order, ...previousOrders]);
-    setDrawerView('orders');
-    setCartOpen(true);
-    pushSnackbar('Order placed successfully');
-    notifyUser('Order placed', `${order.trackingCode} has been confirmed.`);
-    scheduleOrderStatusUpdates(order.id);
-    alert('Order placed successfully');
-
-    // Also persist single-item orders to history for the exact user
-    if (userId) {
-      const historyRows = [
-        {
-          user_id: userId,
-          product_id: String(product.id),
-          quantity: 1,
-          date: new Date(orderCreatedAt).toISOString(),
-        },
-      ];
-
-      supabase.from(HISTORY_TABLE).insert(historyRows).then(({ error: historyError }) => {
-        if (historyError) {
-          console.warn('History sync failed for single order:', historyError);
-        }
-      });
-    }
-  };
-
-  const handleCheckout = async (paymentMethod, options = {}) => {
-    const { allowGuest = false } = options;
-
-    if (cartEntries.length === 0) {
-      pushSnackbar('Your cart is empty');
-      return;
-    }
-
-    // Prevent unauthenticated users from placing orders
-    if (!authUser && !allowGuest) {
-      pushSnackbar('Please sign in before placing an order');
-      setAuthMode('login');
-      setAuthOpen(true);
-      return;
-    }
-
-    const order = {
-      id: createOrderId(),
-      trackingCode: `FM-${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
-      createdAt: Date.now(),
-      items: buildLineItems(cartEntries, formatPrice),
-      subtotal: cartTotal,
-      discountAmount,
-      total: payableTotal,
-      paymentMethod,
-      status: 'Confirmed',
-      customer: accountLabel,
-    };
-
-    setOrders((previousOrders) => [order, ...previousOrders]);
-    setCartItems({});
-    setAppliedPromoCode('');
-    setPromoCodeInput('');
-    setDrawerView('orders');
-    setCartOpen(true);
-    pushSnackbar(`${paymentMethod} checkout completed`);
-    notifyUser('Order placed', `${order.trackingCode} has been confirmed.`);
-
-    const userId = await getSupabaseUserId();
-
-    if (userId) {
-      const historyRows = cartEntries.map(({ product, quantity }) => ({
-        user_id: userId,
-        product_id: String(product.id),
-        quantity,
-        date: new Date(order.createdAt).toISOString(),
-      }));
-
-      supabase.from(HISTORY_TABLE).insert(historyRows).then(({ error: historyError }) => {
-        if (historyError) {
-          console.warn('History sync failed:', historyError);
-        }
-      });
-    }
-
-    scheduleOrderStatusUpdates(order.id);
-  };
-
-  const handleStripeCheckout = () => handleCheckout('Stripe');
-  const handleRazorpayCheckout = () => handleCheckout('Razorpay');
 
   const cartPreviewLabel = cartItemCount > 0 ? `${cartItemCount} item${cartItemCount === 1 ? '' : 's'}` : 'Cart empty';
 
@@ -1661,13 +1585,7 @@ function App() {
 
             <div className="checkout-actions">
               <button type="button" className="place-order-btn" onClick={openOtpModal} disabled={cartEntries.length === 0}>
-                Confirm Order
-              </button>
-              <button type="button" className="place-order-btn" onClick={handleRazorpayCheckout} disabled={cartEntries.length === 0}>
-                Pay with Razorpay
-              </button>
-              <button type="button" className="place-order-btn" onClick={handleStripeCheckout} disabled={cartEntries.length === 0}>
-                Pay with Stripe
+                Order
               </button>
             </div>
 
@@ -1738,8 +1656,7 @@ function App() {
       <OtpVerificationModal
         open={showOtp}
         onClose={() => {
-          setPendingOtpProduct(null);
-          setOtpFlow('checkout');
+          setPendingOrder(null);
           setShowOtp(false); // FIX: close the shared OTP modal and clear the pending single-order state.
         }}
         onVerified={handleOtpVerified}
