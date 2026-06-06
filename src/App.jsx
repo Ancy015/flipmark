@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from './supabase';
 import Home from './Home';
+import ExploreCategories from './ExploreCategories';
 import Contact from './Contact';
 import History from './History';
 import OtpVerificationModal from './OtpVerificationModal';
@@ -271,6 +272,8 @@ function App() {
   const [authForm, setAuthForm] = useState({ name: '', email: '', password: '' });
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [authPasswordVisible, setAuthPasswordVisible] = useState(false);
+  const [authIconsAvailable, setAuthIconsAvailable] = useState(true);
   const [otpOpen, setOtpOpen] = useState(false);
   const showOtp = otpOpen;
   const setShowOtp = setOtpOpen;
@@ -564,7 +567,16 @@ function App() {
           ? 'Name: A to Z'
           : 'Default Sorting';
 
-  const trendingProducts = products.slice(0, 4);
+  const FORCED_TRENDING_NAMES = ['kulfi', 'cashews', 'brownies', 'chesse pizze', 'cheese pizza'];
+
+  function _normalizeName(n) {
+    return String(n || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  }
+
+  const forcedSet = new Set(FORCED_TRENDING_NAMES.map(_normalizeName));
+  const forced = products.filter((p) => forcedSet.has(_normalizeName(p.name)));
+  const others = products.filter((p) => !forcedSet.has(_normalizeName(p.name)));
+  const trendingProducts = [...forced, ...others].slice(0, 4);
 
   const productById = useMemo(() => {
     return new Map(products.map((product) => [String(product.id), product]));
@@ -772,23 +784,30 @@ function App() {
   const handleRemoveHistoryItem = async (historyId) => {
     if (!historyId) return;
 
-    // Try to get an authenticated Supabase user id. If none exists,
-    // still remove the item locally so the UI responds immediately.
+    const removeHistoryItemLocally = (previousOrders) => {
+      return previousOrders
+        .map((order) => {
+          const nextItems = (order.items || []).filter((it) => String(it.historyId || '') !== String(historyId));
+          return { ...order, items: nextItems };
+        })
+        .filter((order) => Array.isArray(order.items) && order.items.length > 0);
+    };
+
+    const matchingItem = orders
+      .flatMap((order) => order.items || [])
+      .find((item) => String(item.historyId || item.id || '') === String(historyId));
+    const isDatabaseBackedHistory = Boolean(
+      matchingItem && String(matchingItem.historyId || '') !== String(matchingItem.id || ''),
+    );
+    const previousOrders = orders;
+
+    // Remove the item from the screen right away so the UI feels immediate.
+    setOrders((currentOrders) => removeHistoryItemLocally(currentOrders));
+
+    // Only hit Supabase for rows that came from the history table.
     const userId = await getSupabaseUserId();
 
-    if (!userId) {
-      // Remove locally for unauthenticated users (local demo sessions)
-      setOrders((previous) => {
-        const next = previous
-          .map((order) => {
-            const nextItems = (order.items || []).filter((it) => String(it.historyId || '') !== String(historyId));
-            return { ...order, items: nextItems };
-          })
-          .filter((order) => Array.isArray(order.items) && order.items.length > 0);
-
-        return next;
-      });
-
+    if (!userId || !isDatabaseBackedHistory) {
       pushSnackbar('Removed item from history');
       return;
     }
@@ -798,24 +817,15 @@ function App() {
 
       if (error) {
         console.warn('Failed to delete history row:', error);
+        setOrders(previousOrders);
         pushSnackbar('Unable to remove history item');
         return;
       }
 
-      setOrders((previous) => {
-        const next = previous
-          .map((order) => {
-            const nextItems = (order.items || []).filter((it) => String(it.historyId || '') !== String(historyId));
-            return { ...order, items: nextItems };
-          })
-          .filter((order) => Array.isArray(order.items) && order.items.length > 0);
-
-        return next;
-      });
-
       pushSnackbar('Removed item from history');
     } catch (err) {
       console.warn('Error removing history item:', err);
+      setOrders(previousOrders);
       pushSnackbar('Unable to remove history item');
     }
   };
@@ -874,6 +884,7 @@ function App() {
 
   const openAuthModal = () => {
     setAuthMode('login');
+    setAuthPasswordVisible(false);
     setAuthOpen(true);
   };
 
@@ -1127,6 +1138,20 @@ function App() {
     );
   }
 
+  if (activePage === 'explore') {
+    return (
+      <div className="page-shell route-page route-page--explore">
+        <ExploreCategories
+          onNavigateHome={() => navigateToPage('home', 'top')}
+          onNavigateProducts={() => navigateToPage('home', 'products')}
+          onNavigateHistory={() => navigateToPage('history', 'top')}
+          onNavigateContact={() => navigateToPage('contact', 'top')}
+          onJumpToProducts={handleCategoryJump}
+        />
+      </div>
+    );
+  }
+
   if (activePage === 'contact') {
     return (
       <div className="page-shell route-page route-page--contact">
@@ -1146,6 +1171,7 @@ function App() {
         trendingProducts={trendingProducts}
         products={products}
         onJumpToProducts={handleCategoryJump}
+        onExploreCategories={() => navigateToPage('explore', 'top')}
         onNavigateHome={() => navigateToPage('home', 'top')}
         onNavigateProducts={() => navigateToPage('home', 'products')}
         onNavigateContact={() => navigateToPage('contact', 'top')}
@@ -1627,12 +1653,31 @@ function App() {
                   value={authForm.email}
                   onChange={(event) => setAuthForm((previous) => ({ ...previous, email: event.target.value }))}
                 />
-                <input
-                  type="password"
-                  placeholder="Password"
-                  value={authForm.password}
-                  onChange={(event) => setAuthForm((previous) => ({ ...previous, password: event.target.value }))}
-                />
+                <div className="password-field">
+                  <input
+                    type={authPasswordVisible ? 'text' : 'password'}
+                    placeholder="Password"
+                    value={authForm.password}
+                    onChange={(event) => setAuthForm((previous) => ({ ...previous, password: event.target.value }))}
+                    aria-label="Password"
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    aria-pressed={authPasswordVisible}
+                    aria-label={authPasswordVisible ? 'Hide password' : 'Show password'}
+                    onClick={() => setAuthPasswordVisible((p) => !p)}
+                  >
+                    {/* Prefer user-provided icons in public/icons/, fallback to emoji if missing */}
+                    <img
+                      src={authPasswordVisible ? 'https://img.icons8.com/?size=100&id=85035&format=png&color=000000' : '/icons/eye.svg'}
+                      alt={authPasswordVisible ? 'Hide' : 'Show'}
+                      style={{ display: authIconsAvailable ? 'inline-block' : 'none', width: 18, height: 18 }}
+                      onError={() => setAuthIconsAvailable(false)}
+                    />
+                    {!authIconsAvailable ? (authPasswordVisible ? '🙈' : '👁️') : null}
+                  </button>
+                </div>
 
                 <button type="submit" className="auth-submit-btn" disabled={authBusy}>
                   {authBusy ? 'Please wait...' : authMode === 'login' ? 'Login' : 'Signup'}

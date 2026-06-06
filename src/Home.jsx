@@ -24,6 +24,7 @@ function Home({
   trendingProducts,
   products,
   onJumpToProducts,
+  onExploreCategories,
   onNavigateHome,
   onNavigateProducts,
   onNavigateContact,
@@ -149,11 +150,11 @@ function Home({
             </p>
             <div className="hero-actions">
               <a className="primary-cta" href="#products">
-                Shop Now
-              </a>
-              <a className="secondary-cta" href="#featured-categories">
-                Explore Categories
-              </a>
+                  Shop Now
+                </a>
+                <button type="button" className="secondary-cta" onClick={() => onExploreCategories?.()}>
+                  Explore Categories
+                </button>
             </div>
             <div className="hero-metrics" aria-label="Store highlights">
               <div>
