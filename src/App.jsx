@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase } from './supabase';
 import Home from './Home';
 import ExploreCategories from './ExploreCategories';
@@ -604,16 +604,28 @@ function App() {
         let wishlistResponse = { data: [], error: null };
         let historyResponse = { data: [], error: null };
 
-        try {
-          wishlistResponse = await supabase.from(WISHLIST_TABLE).select('product_id').eq('user_id', userId);
-        } catch (err) {
-          console.warn('Wishlist fetch threw:', err?.message || err);
+        if (!window.__flipmark_missing_tables?.wishlist) {
+          try {
+            wishlistResponse = await supabase.from(WISHLIST_TABLE).select('product_id').eq('user_id', userId);
+            if (wishlistResponse?.error?.status === 404) {
+              window.__flipmark_missing_tables = window.__flipmark_missing_tables || {};
+              window.__flipmark_missing_tables.wishlist = true;
+            }
+          } catch (err) {
+            // silently skip
+          }
         }
 
-        try {
-          historyResponse = await supabase.from(HISTORY_TABLE).select('id, product_id, quantity, date').eq('user_id', userId).order('date', { ascending: false });
-        } catch (err) {
-          console.warn('History fetch threw:', err?.message || err);
+        if (!window.__flipmark_missing_tables?.history) {
+          try {
+            historyResponse = await supabase.from(HISTORY_TABLE).select('id, product_id, quantity, date').eq('user_id', userId).order('date', { ascending: false });
+            if (historyResponse?.error?.status === 404) {
+              window.__flipmark_missing_tables = window.__flipmark_missing_tables || {};
+              window.__flipmark_missing_tables.history = true;
+            }
+          } catch (err) {
+            // silently skip
+          }
         }
 
         if (!isMounted) {
@@ -680,6 +692,10 @@ function App() {
 
     const syncWishlist = async () => {
       try {
+        if (window.__flipmark_missing_tables?.wishlist) {
+          return;
+        }
+
         const userId = await getSupabaseUserId();
 
         if (!userId) {
