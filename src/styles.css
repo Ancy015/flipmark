@@ -41,6 +41,50 @@ input {
   font: inherit;
 }
 
+/* Positioning and sizing for password toggle (icon fits input box) */
+.password-field {
+  position: relative;
+  display: block;
+}
+
+.password-field input {
+  padding-right: 48px; /* reserve space for the toggle */
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: none; /* ensure no visible background */
+  padding: 0; /* remove inner box padding */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: calc(100% - 8px);
+  width: 34px;
+  box-shadow: none; /* remove any shadow that creates a box */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.password-toggle-btn img {
+  width: 18px;
+  height: 18px;
+  display: block;
+  max-height: 100%;
+}
+
+.password-toggle-btn:focus {
+  outline: none; /* remove default focus rectangle */
+}
+
+.password-toggle-btn:focus-visible {
+  outline: 2px solid rgba(0,0,0,0.08);
+  outline-offset: 2px;
+}
+
 button {
   cursor: pointer;
 }
@@ -239,7 +283,9 @@ a {
 .search-box {
   position: relative;
   display: block;
-  min-width: 390px;
+  /* allow the search box to shrink on small screens to avoid overlap */
+  min-width: 0;
+  flex: 1 1 auto;
   max-width: 430px;
   width: 100%;
 }
@@ -253,7 +299,8 @@ a {
 }
 
 .search-input-row input {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0; /* allow input to shrink inside flex containers */
   border: 0;
   padding: 11px 14px;
   outline: none;
@@ -280,6 +327,8 @@ a {
   background: #d6cab5;
   border-radius: 12px;
   overflow: hidden;
+  max-height: 320px;
+  overflow: auto;
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
 }
 
@@ -306,6 +355,7 @@ a {
   gap: 18px;
   padding: 42px 0 16px;
   align-items: stretch;
+  transition: transform 220ms cubic-bezier(0.2,0.8,0.2,1), opacity 180ms ease;
 }
 
 .home-hero-panel {
@@ -315,6 +365,7 @@ a {
 .home-hero-copy {
   padding: 24px 0;
   max-width: 880px;
+  transition: transform 220ms cubic-bezier(0.2,0.8,0.2,1), opacity 180ms ease;
 }
 
 .home-hero-copy h1 {
@@ -1495,6 +1546,45 @@ a {
   font-size: 12px;
 }
 
+/* Password field wrapper: keep input and toggle same overall width */
+.password-field {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.password-field input {
+  flex: 1 1 auto;
+  margin: 0;
+  border-radius: 8px 0 0 8px;
+  padding: 8px 10px;
+  border: 1px solid #ddd6cc;
+  font-size: 12px;
+}
+
+.password-toggle-btn {
+  flex: 0 0 40px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0; /* remove visible box border */
+  background: transparent; /* make background blend with input */
+  border-radius: 0 8px 8px 0; /* keep rounded corner for visual continuity */
+  font-size: 16px;
+  line-height: 1;
+  padding: 0 8px; /* small horizontal padding so icon isn't flush */
+}
+
+.password-toggle-btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.password-toggle-btn:focus-visible {
+  outline: 2px solid rgba(0,0,0,0.08);
+  outline-offset: 2px;
+}
+
 .auth-submit-btn {
   width: fit-content;
   border: 0;
@@ -1510,6 +1600,281 @@ a {
   margin: 0;
   font-size: 12px;
   color: #5f5b54;
+}
+
+/* Strong overrides to ensure the password toggle has no visible box */
+.password-field .password-toggle-btn,
+.password-field .password-toggle-btn img {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.password-field .password-toggle-btn {
+  padding: 0 !important;
+}
+
+/* Explore categories preview page */
+.explore-hero {
+  padding-bottom: 28px;
+}
+
+.explore-nav-row {
+  align-items: center;
+}
+
+.explore-hero-grid {
+  position: relative;
+  z-index: 1;
+  padding: 42px 0 10px;
+}
+
+.explore-hero-copy {
+  max-width: 860px;
+}
+
+.explore-hero-copy h1 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(34px, 5vw, 68px);
+  line-height: 0.94;
+  letter-spacing: -0.03em;
+}
+
+.explore-hero-copy > p {
+  max-width: 58ch;
+  margin: 16px 0 0;
+  font-size: 16px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.explore-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.explore-stats div {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.explore-stats strong {
+  display: block;
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+
+.explore-stats span {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.96);
+}
+
+.explore-spotlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.explore-spotlights span {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  font-size: 22px;
+}
+
+.explore-page {
+  padding: 18px 0 72px;
+  background: linear-gradient(180deg, #fbf8f1 0%, #fffdf8 100%);
+}
+
+.explore-nav-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 10px;
+  padding-bottom: 8px;
+}
+
+.explore-chip {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--green-900);
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(12, 36, 14, 0.06);
+}
+
+.explore-sections {
+  display: grid;
+  gap: 22px;
+  margin-top: 14px;
+}
+
+.explore-category-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: 22px;
+  align-items: stretch;
+  padding: 24px;
+  border-radius: 28px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(247, 242, 230, 0.98));
+  border: 1px solid rgba(231, 225, 215, 0.9);
+  box-shadow: var(--shadow);
+}
+
+.explore-category-section--reverse {
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
+}
+
+.explore-category-section--reverse .explore-category-copy {
+  order: 2;
+}
+
+.explore-category-section--reverse .explore-category-visual {
+  order: 1;
+}
+
+.explore-category-copy h2 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(28px, 4vw, 44px);
+  color: var(--green-900);
+}
+
+.explore-category-copy > p:nth-of-type(2) {
+  margin: 14px 0 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.explore-feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 0;
+  display: grid;
+  gap: 10px;
+  color: var(--text);
+  font-weight: 600;
+}
+
+.explore-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 18px;
+  color: var(--muted);
+}
+
+.explore-price-row strong {
+  color: var(--green-900);
+  font-size: 24px;
+}
+
+.explore-shop-btn {
+  margin-top: 18px;
+}
+
+.explore-category-visual {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 16px;
+  padding: 24px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(40, 95, 53, 0.08), rgba(216, 180, 92, 0.1));
+  border: 1px solid rgba(40, 95, 53, 0.08);
+}
+
+.explore-category-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 14px 26px rgba(12, 36, 14, 0.1);
+  font-size: 42px;
+}
+
+.explore-category-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.explore-category-items span {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--green-900);
+  font-weight: 700;
+  text-align: center;
+  border: 1px solid rgba(231, 225, 215, 0.9);
+}
+
+.explore-final-cta {
+  margin-top: 30px;
+  padding: 28px;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #fff9ef, #f4f9ef);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  text-align: center;
+}
+
+.explore-final-cta h2 {
+  margin: 0;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: clamp(30px, 4vw, 44px);
+  color: var(--green-900);
+}
+
+.explore-final-cta p {
+  margin: 10px auto 0;
+  max-width: 58ch;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.explore-final-cta .primary-cta {
+  margin-top: 16px;
+}
+
+@media (max-width: 1024px) {
+  .explore-stats,
+  .explore-category-section,
+  .explore-category-section--reverse {
+    grid-template-columns: 1fr;
+  }
+
+  .explore-category-section--reverse .explore-category-copy,
+  .explore-category-section--reverse .explore-category-visual {
+    order: initial;
+  }
+}
+
+@media (max-width: 640px) {
+  .explore-category-section {
+    padding: 18px;
+  }
+
+  .explore-category-items {
+    grid-template-columns: 1fr;
+  }
 }
 
 .auth-message {
