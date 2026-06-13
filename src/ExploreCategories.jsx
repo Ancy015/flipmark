@@ -2,7 +2,7 @@ import React from 'react';
 
 const CATEGORY_SECTIONS = [
   {
-    id: 'fruits',
+    id: 'fruit',
     badge: 'Fresh & Seasonal',
     title: 'Fruits',
     description:
@@ -10,11 +10,11 @@ const CATEGORY_SECTIONS = [
     features: ['100% Farm Fresh', 'Seasonal Variety', 'Rich in Vitamins', 'No Preservatives'],
     price: '₹25',
     ctaLabel: 'Shop Fruits',
-    url: 'https://i.pinimg.com/736x/3c/0d/e3/3c0de391cc7481d46823ce2c7783e46f.jpg',
+    url: 'https://i.pinimg.com/736x/a3/7b/25/a37b25af9a2af9456f4d0b47853b931b.jpg',
     items: ['Mango', 'Apple', 'Banana', 'Grapes', 'Papaya', 'Watermelon'],
   },
   {
-    id: 'vegetables',
+    id: 'vegetable',
     badge: 'Farm to Table',
     title: 'Vegetables',
     description:
@@ -22,11 +22,11 @@ const CATEGORY_SECTIONS = [
     features: ['Daily Fresh Stock', 'Organic Options', 'Zero Chemicals', 'Local Farmers'],
     price: '₹15',
     ctaLabel: 'Shop Vegetables',
-    icon: '🥦',
+    url: ' https://i.pinimg.com/736x/b3/37/2d/b3372d4bd8515bfeb7cfe8fc203fed74.jpg',
     items: ['Tomato', 'Spinach', 'Carrot', 'Onion', 'Capsicum', 'Brinjal'],
   },
   {
-    id: 'juices',
+    id: 'juice',
     badge: 'Cold Pressed & Fresh',
     title: 'Juices',
     description:
@@ -34,11 +34,11 @@ const CATEGORY_SECTIONS = [
     features: ['No Added Sugar', 'Cold Pressed', '100% Natural', 'Vitamin Boost'],
     price: '₹40',
     ctaLabel: 'Shop Juices',
-    icon: '🥤',
+    url: ' https://i.pinimg.com/1200x/2f/9e/e5/2f9ee5c9c9d47aafffc1db69c86fa8e5.jpg',
     items: ['Mango', 'Orange', 'Pomegranate', 'Sugarcane', 'Lemon Mint', 'Mixed Fruit'],
   },
   {
-    id: 'pulses',
+    id: 'pulse',
     badge: 'Protein Powerhouse',
     title: 'Pulses',
     description:
@@ -46,11 +46,11 @@ const CATEGORY_SECTIONS = [
     features: ['High Protein', 'Stone Free', 'Premium Grade', 'Long Shelf Life'],
     price: '₹60',
     ctaLabel: 'Shop Pulses',
-    icon: '🫘',
+    url: 'https://i.pinimg.com/1200x/88/d4/39/88d439dfcaa41793784fe26ef09eaefe.jpg',
     items: ['Toor Dal', 'Moong Dal', 'Chana Dal', 'Masoor Dal', 'Urad Dal', 'Rajma'],
   },
   {
-    id: 'cereals',
+    id: 'cereal',
     badge: 'Whole Grain Goodness',
     title: 'Cereals',
     description:
@@ -58,7 +58,7 @@ const CATEGORY_SECTIONS = [
     features: ['Whole Grain', 'Fortified Options', 'High Fibre', 'No Additives'],
     price: '₹30',
     ctaLabel: 'Shop Cereals',
-    icon: '🌾',
+    url: 'https://i.pinimg.com/1200x/02/6e/2c/026e2c0b975b3314eb1513814762f85a.jpg',
     items: ['Basmati Rice', 'Wheat Flour', 'Oats', 'Poha', 'Semolina', 'Cornflakes'],
   },
   {
@@ -70,11 +70,11 @@ const CATEGORY_SECTIONS = [
     features: ['Daily Fresh', 'Pasteurised', 'A2 Milk Options', 'Farm Sourced'],
     price: '₹20',
     ctaLabel: 'Shop Dairy',
-    icon: '🥛',
+    url: 'https://i1-e.pinimg.com/736x/2c/e7/11/2ce711058a94302de93350453d712ce4.jpg',
     items: ['Full Cream Milk', 'Paneer', 'Curd', 'Butter', 'Ghee', 'Cheese'],
   },
   {
-    id: 'snacks',
+    id: 'snack',
     badge: 'Munch Time Favourites',
     title: 'Snacks',
     description:
@@ -82,7 +82,7 @@ const CATEGORY_SECTIONS = [
     features: ['Baked Options', 'No Trans Fat', 'Guilt-Free Picks', '100+ Varieties'],
     price: '₹15',
     ctaLabel: 'Shop Snacks',
-    icon: '🥨',
+    url: 'https://i.pinimg.com/1200x/b4/26/35/b42635a68a577c2f57386e21ac67a573.jpg',
     items: ['Potato Chips', 'Bhujia', 'Popcorn', 'Biscuits', 'Namkeen', 'Crackers'],
   },
   {
@@ -94,11 +94,11 @@ const CATEGORY_SECTIONS = [
     features: ['Stone Ground', 'No Fillers', 'Farm Sourced', 'Aroma Sealed'],
     price: '₹20',
     ctaLabel: 'Shop Masala',
-    icon: '🌶️',
+    url: 'https://i.pinimg.com/736x/ae/aa/c8/aeaac82c8f2327dbe9b21d71ab360387.jpg',
     items: ['Turmeric', 'Red Chilli', 'Coriander', 'Cumin', 'Garam Masala', 'Pepper'],
   },
   {
-    id: 'dry-fruits',
+    id: 'dryfruits&nuts',
     badge: 'Premium Healthy Snacking',
     title: 'Dry Fruits & Nuts',
     description:
@@ -106,7 +106,7 @@ const CATEGORY_SECTIONS = [
     features: ['Premium Grade', 'Handpicked', 'Rich in Omega-3', 'No Artificial Color'],
     price: '₹80',
     ctaLabel: 'Shop Dry Fruits',
-    icon: '🥜',
+    url: 'https://i.pinimg.com/736x/84/0f/e2/840fe266401fe8cafcc879a8b4793ca3.jpg',
     items: ['Cashews', 'Almonds', 'Pistachios', 'Walnuts', 'Raisins', 'Dates'],
   },
   {
@@ -118,19 +118,19 @@ const CATEGORY_SECTIONS = [
     features: ['No Preservatives', 'Traditional Recipe', 'Pure Mustard Oil', 'Homestyle'],
     price: '₹45',
     ctaLabel: 'Shop Pickles',
-    icon: '🫙',
+    url: 'https://i.pinimg.com/1200x/f2/2c/39/f22c394f7968d4c8c9544424c90b8908.jpg',
     items: ['Mango Pickle', 'Lemon Pickle', 'Mixed Pickle', 'Garlic Pickle', 'Chilli Pickle', 'Amla Pickle'],
   },
   {
-    id: 'ice-cream',
+    id: 'icecream',
     badge: 'Cool & Creamy',
-    title: 'Ice Cream',
+    title: 'icecream',
     description:
       'Indulgent ice creams and frozen desserts in dozens of flavors. From classic vanilla to exotic kulfi — cool down in the most delicious way possible.',
     features: ['Real Dairy Cream', '50+ Flavours', 'Sugar-Free Options', 'No Artificial Color'],
     price: '₹30',
     ctaLabel: 'Shop Ice Cream',
-    icon: '🍦',
+    url: 'https://i.pinimg.com/1200x/92/84/51/928451721d9d5e8bc9729793a095532f.jpg',
     items: ['Vanilla', 'Chocolate', 'Strawberry', 'Kulfi', 'Mango Sorbet', 'Butterscotch'],
   },
   {
@@ -142,11 +142,11 @@ const CATEGORY_SECTIONS = [
     features: ['Baked Fresh Daily', 'Eggless Options', 'Custom Orders', 'Premium Ingredients'],
     price: '₹60',
     ctaLabel: 'Shop Cakes',
-    icon: '🎂',
+    url: 'https://i.pinimg.com/1200x/bd/16/95/bd169527a3bcb9cdae6a229bee5eb2e3.jpg',
     items: ['Black Forest', 'Choco Truffle', 'Pineapple', 'Red Velvet', 'Croissant', 'Muffins'],
   },
   {
-    id: 'fast-food',
+    id: 'fastfood',
     badge: 'Quick & Delicious',
     title: 'Fast Food',
     description:
@@ -154,11 +154,11 @@ const CATEGORY_SECTIONS = [
     features: ['Made Fresh', 'Hot Delivery', 'Family Packs', 'Combo Deals'],
     price: '₹30',
     ctaLabel: 'Shop Fast Food',
-    icon: '🍔',
+    url: 'https://i.pinimg.com/736x/c8/3c/11/c83c1130b43e4518992e9cb318fc8671.jpg',
     items: ['Burger', 'French Fries', 'Nuggets', 'Pizza', 'Garlic Bread', 'Wraps'],
   },
   {
-    id: 'street-food',
+    id: 'streetfood',
     badge: 'Authentic Street Flavours',
     title: 'Street Food',
     description:
@@ -166,7 +166,7 @@ const CATEGORY_SECTIONS = [
     features: ['Authentic Recipes', 'Fresh Every Day', 'Chef Curated', 'Hygiene Certified'],
     price: '₹25',
     ctaLabel: 'Shop Street Food',
-    icon: '🌯',
+    url: 'https://i.pinimg.com/736x/a6/b5/c0/a6b5c0f8a90b6290ed12c5ba4635508b.jpg',
     items: ['Pani Puri', 'Kathi Roll', 'Vada Pav', 'Samosa', 'Pakoras', 'Chaat'],
   },
 ];
@@ -273,18 +273,13 @@ function ExploreCategories({ onNavigateHome, onNavigateProducts, onNavigateHisto
                   <strong>{section.price}</strong>
                 </div>
 
-                <button type="button" className="primary-cta explore-shop-btn" onClick={() => onJumpToProducts?.(section.title)}>
+                <button type="button" className="primary-cta explore-shop-btn" onClick={() => onJumpToProducts?.(section.id)}>
                   {section.ctaLabel} →
                 </button>
               </div>
 
               <div className="explore-category-visual" aria-label={`${section.title} preview`}>
-                <div className="explore-category-icon">{section.icon}</div>
-                <div className="explore-category-items">
-                  {section.items.map((item) => (
-                    <span key={item}>{item}</span>
-                  ))}
-                </div>
+                <img src={section.url} alt={section.title} className="explore-category-cover-img" />
               </div>
             </article>
           ))}
