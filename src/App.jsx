@@ -5,6 +5,7 @@ import ExploreCategories from './ExploreCategories';
 import Contact from './Contact';
 import History from './History';
 import OtpVerificationModal from './OtpVerificationModal';
+import Viewer360Modal from './Viewer360Modal';
 import { usingFallbackSupabaseConfig } from './supabase';
 
 const PRODUCTS_TABLE = 'product';
@@ -278,6 +279,7 @@ function App() {
   const showOtp = otpOpen;
   const setShowOtp = setOtpOpen;
   const [pendingOrder, setPendingOrder] = useState(null);
+  const [selected360Product, setSelected360Product] = useState(null);
   const [cartItems, setCartItems] = useState({});
   const [cartOpen, setCartOpen] = useState(false);
   const [cartPreviewOpen, setCartPreviewOpen] = useState(false);
@@ -567,15 +569,26 @@ function App() {
           ? 'Name: A to Z'
           : 'Default Sorting';
 
-  const FORCED_TRENDING_NAMES = ['kulfi', 'cashews', 'brownies', 'chesse pizze', 'cheese pizza'];
+  const FORCED_TRENDING_NAMES = [
+    'kulfi', 'cashews', 'brownies',
+    'cheese pizza', 'chesse pizza', 'chesse pizze', 'chess pizza',
+    'cheesepizza', 'chesepizza',
+  ];
+  const TRENDING_EXCLUDE = [
+    'ginger garlic pick', 'ginger garlic pickle',
+    'gingergarlic', 'ginger garlic',
+  ];
 
   function _normalizeName(n) {
     return String(n || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
-  const forcedSet = new Set(FORCED_TRENDING_NAMES.map(_normalizeName));
+  const forcedSet  = new Set(FORCED_TRENDING_NAMES.map(_normalizeName));
+  const excludeSet = new Set(TRENDING_EXCLUDE.map(_normalizeName));
   const forced = products.filter((p) => forcedSet.has(_normalizeName(p.name)));
-  const others = products.filter((p) => !forcedSet.has(_normalizeName(p.name)));
+  const others = products.filter(
+    (p) => !forcedSet.has(_normalizeName(p.name)) && !excludeSet.has(_normalizeName(p.name)),
+  );
   const trendingProducts = [...forced, ...others].slice(0, 4);
 
   const productById = useMemo(() => {
@@ -604,7 +617,7 @@ function App() {
         let wishlistResponse = { data: [], error: null };
         let historyResponse = { data: [], error: null };
 
-        if (!window.__flipmark_missing_tables?.wishlist) {
+        if (!usingFallbackSupabaseConfig && !window.__flipmark_missing_tables?.wishlist) {
           try {
             wishlistResponse = await supabase.from(WISHLIST_TABLE).select('product_id').eq('user_id', userId);
             if (wishlistResponse?.error?.status === 404) {
@@ -616,7 +629,7 @@ function App() {
           }
         }
 
-        if (!window.__flipmark_missing_tables?.history) {
+        if (!usingFallbackSupabaseConfig && !window.__flipmark_missing_tables?.history) {
           try {
             historyResponse = await supabase.from(HISTORY_TABLE).select('id, product_id, quantity, date').eq('user_id', userId).order('date', { ascending: false });
             if (historyResponse?.error?.status === 404) {
@@ -730,10 +743,15 @@ function App() {
     syncWishlist();
   }, [authReady, authStorageKey, authUser, remoteDataHydratedKey, wishlistItems, wishlistSyncSignature]);
 
+  const normalizeCategoryKey = (value) =>
+    String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
+
   const handleCategoryJump = (categoryName) => {
-    // Match categories case-insensitively so browse tiles (which use lower-case keys)
-    // still select the right category even if products store a different casing.
-    const matched = categories.find((c) => String(c).toLowerCase() === String(categoryName).toLowerCase());
+    const targetKey = normalizeCategoryKey(categoryName);
+    const matched = categories.find((category) => normalizeCategoryKey(category) === targetKey);
     setActiveCategory(matched || 'All');
     navigateToPage('home', 'products');
   };
@@ -1217,7 +1235,7 @@ function App() {
               <div className="empty-state">Loading trending products...</div>
             ) : (
               trendingProducts.map((product) => (
-                <article className="trending-card" key={product.id}>
+                <article className="trending-card" key={product.id} onClick={() => setSelected360Product(product)} style={{ cursor: 'pointer' }}>
                   <div className="product-visual">
                     <img src={product.imageUrl || FALLBACK_IMAGE} alt={product.name || 'Product image'} />
                   </div>
@@ -1233,14 +1251,14 @@ function App() {
                         type="button"
                         className="wishlist-toggle-btn"
                         aria-pressed={getWishlistCount(product.id) > 0}
-                        onClick={() => toggleWishlist(product.id)}
+                        onClick={(e) => { e.stopPropagation(); toggleWishlist(product.id); }}
                       >
                         {getWishlistCount(product.id) > 0 ? 'Saved' : 'Save'}
                       </button>
                       <button
                         type="button"
                         className="primary-cta small-cta"
-                        onClick={() => handleOrder(product)}
+                        onClick={(e) => { e.stopPropagation(); handleOrder(product); }}
                       >
                         Order
                       </button>
@@ -1294,7 +1312,7 @@ function App() {
                 onMouseEnter={() => setCartPreviewOpen(true)}
                 onMouseLeave={() => {
                   if (cartPreviewTimerRef.current) {
-                    window.clearout(cartPreviewTimerRef.current);
+                    window.clearTimeout(cartPreviewTimerRef.current);
                   }
 
                   cartPreviewTimerRef.current = window.setTimeout(() => setCartPreviewOpen(false), 140);
@@ -1682,11 +1700,11 @@ function App() {
                     className="password-toggle-btn"
                     aria-pressed={authPasswordVisible}
                     aria-label={authPasswordVisible ? 'Hide password' : 'Show password'}
-                    onClick={() => setAuthPasswordVisible((p) => !p)}
+                    onClick={() => setAuthPasswordVisible(!authPasswordVisible)}
                   >
                     {/* Prefer user-provided icons in public/icons/, fallback to emoji if missing */}
                     <img
-                      src={authPasswordVisible ? 'https://img.icons8.com/?size=100&id=85035&format=png&color=000000' : '/icons/eye.svg'}
+                      src={authPasswordVisible ? '/icons/eye.svg' : '/icons/eye-off.svg'}
                       alt={authPasswordVisible ? 'Hide' : 'Show'}
                       style={{ display: authIconsAvailable ? 'inline-block' : 'none', width: 18, height: 18 }}
                       onError={() => setAuthIconsAvailable(false)}
@@ -1721,6 +1739,17 @@ function App() {
           setShowOtp(false); // FIX: close the shared OTP modal and clear the pending single-order state.
         }}
         onVerified={handleOtpVerified}
+      />
+
+      <Viewer360Modal
+        product={selected360Product}
+        onClose={() => setSelected360Product(null)}
+        onOrder={() => {
+          setSelected360Product(null);
+          handleOrder(selected360Product);
+        }}
+        formatPrice={formatPrice}
+        fallbackImage={FALLBACK_IMAGE}
       />
 
       {snackbar ? <div className="snackbar">{snackbar}</div> : null}

@@ -143,18 +143,18 @@ function Home({
         <div className="container home-hero-grid">
           <div className="home-hero-copy">
             <p className="eyebrow">Freshness Delivered Daily</p>
-            <h1>Professional grocery shopping, built for speed and trust.</h1>
+            <h1>Shop fresh. Eat healthy. Live better. </h1>
             <p>
               Discover fresh juices, fruits, vegetables, and weekly specials in a clean experience that feels like a
               modern home page, not just a product list.
             </p>
             <div className="hero-actions">
-              <a className="primary-cta" href="#products">
-                  Shop Now
-                </a>
-                <button type="button" className="secondary-cta" onClick={() => onExploreCategories?.()}>
-                  Explore Categories
-                </button>
+              <button type="button" className="primary-cta" onClick={onNavigateProducts}>
+                Shop Now
+              </button>
+              <button type="button" className="secondary-cta" onClick={() => onExploreCategories?.()}>
+                Explore Categories
+              </button>
             </div>
             <div className="hero-metrics" aria-label="Store highlights">
               <div>
