@@ -40,46 +40,8 @@ function Home({
   onCartToggle,
   currentUserLabel,
   isAuthenticated,
-  searchTerm,
-  setSearchTerm,
 }) {
-  const formatSuggestionLabel = (value) =>
-    value
-      .split(' ')
-      .filter(Boolean)
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-      .join(' ');
-
-  const normalizedSearch = searchTerm.trim().toLowerCase();
-  const suggestionItems = normalizedSearch
-    ? Array.from(
-        new Map(
-          products
-            .flatMap((product) => [product.name || '', product.category || ''])
-            .map((value) => value.trim())
-            .filter(Boolean)
-            .filter((value) => value.toLowerCase().includes(normalizedSearch))
-            .map((value) => [value.toLowerCase(), value]),
-        ).values(),
-      )
-        .map((value) => ({
-          value,
-          label: formatSuggestionLabel(value),
-          isCategory: categories.includes(value),
-        }))
-        .slice(0, 8)
-    : [];
-
-  const handleSuggestionClick = (value) => {
-    if (categories.includes(value)) {
-      setSearchTerm('');
-      onJumpToProducts(value);
-      return;
-    }
-
-    setSearchTerm(value);
-    onJumpToProducts('All');
-  };
+  const cartEntries = cartPreviewEntries || [];
 
   return (
     <>
@@ -108,36 +70,6 @@ function Home({
               Contact
             </button>
           </nav>
-
-          <div className="search-box">
-            <div className="search-input-row">
-              <input
-                type="text"
-                aria-label="Search products"
-                placeholder="Search name or category"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-              />
-              <button type="button" onClick={() => setSearchTerm('')}>
-                Clear
-              </button>
-            </div>
-
-            {suggestionItems.length > 0 && (
-              <div className="search-suggestions" role="listbox" aria-label="Product suggestions">
-                {suggestionItems.map((item) => (
-                  <button
-                    type="button"
-                    key={item.value}
-                    className="search-suggestion-item"
-                    onClick={() => handleSuggestionClick(item.value)}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
         <div className="container home-hero-grid">
@@ -191,11 +123,11 @@ function Home({
                     </button>
                   </div>
 
-                  {cartPreviewEntries.length === 0 ? (
+                  {cartEntries.length === 0 ? (
                     <p className="cart-preview-empty">Your cart is empty. Add products to see them here.</p>
                   ) : (
                     <div className="cart-preview-list">
-                      {cartPreviewEntries.map(({ product, quantity }) => (
+                      {cartEntries.map(({ product, quantity }) => (
                         <div className="cart-preview-item" key={product.id}>
                           <span>{product.name || 'Unnamed product'}</span>
                           <strong>x{quantity}</strong>

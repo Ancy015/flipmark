@@ -260,7 +260,6 @@ function App() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
   const [sortMode, setSortMode] = useState('default');
   const [viewMode, setViewMode] = useState('grid');
@@ -280,10 +279,18 @@ function App() {
   const setShowOtp = setOtpOpen;
   const [pendingOrder, setPendingOrder] = useState(null);
   const [selected360Product, setSelected360Product] = useState(null);
+  const [activeTrendingProductId, setActiveTrendingProductId] = useState(null);
   const [cartItems, setCartItems] = useState({});
   const [cartOpen, setCartOpen] = useState(false);
   const [cartPreviewOpen, setCartPreviewOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProductId, setSelectedProductId] = useState(null);
   const [wishlistItems, setWishlistItems] = useState({});
+
+  const handleSearchChange = (value) => {
+    setSearchTerm(value);
+    setSelectedProductId(null);
+  };
   const [orders, setOrders] = useState([]);
   const [drawerView, setDrawerView] = useState('cart');
   const [promoCodeInput, setPromoCodeInput] = useState('');
@@ -308,6 +315,23 @@ function App() {
       setSnackbar('');
     }, 2500);
   };
+
+  // Prevent accidental full page reloads: prompt user before leaving/reloading
+  useEffect(() => {
+    const onBeforeUnload = (e) => {
+      // If there's an active search term or a selected product, warn user
+      if (searchTerm || selectedProductId) {
+        e.preventDefault();
+        // Chrome requires returnValue to be set
+        e.returnValue = '';
+        return '';
+      }
+      return undefined;
+    };
+
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [searchTerm, selectedProductId]);
 
   const notifyUser = (title, body) => {
     if (typeof window === 'undefined') {
@@ -494,10 +518,14 @@ function App() {
   }, [products]);
 
   const visibleProducts = useMemo(() => {
-    const normalizedSearch = searchTerm.trim().toLowerCase();
     const normalizedCategory = activeCategory.toLowerCase();
+    const normalizedSearch = searchTerm.trim().toLowerCase();
     const minPriceValue = minPrice === '' ? null : Number(minPrice);
     const maxPriceValue = maxPrice === '' ? null : Number(maxPrice);
+
+    if (selectedProductId) {
+      return products.filter((product) => String(product.id) === String(selectedProductId));
+    }
 
     let nextProducts = products.filter((product) => {
       const matchesCategory =
@@ -524,7 +552,7 @@ function App() {
     }
 
     return nextProducts;
-  }, [activeCategory, maxPrice, minPrice, products, searchTerm, sortMode]);
+  }, [activeCategory, maxPrice, minPrice, products, sortMode, searchTerm, selectedProductId]);
 
   const categoryImages = useMemo(() => {
     const nextImages = new Map();
@@ -754,6 +782,40 @@ function App() {
     const matched = categories.find((category) => normalizeCategoryKey(category) === targetKey);
     setActiveCategory(matched || 'All');
     navigateToPage('home', 'products');
+  };
+
+  const getTrendingAccent = (category) => {
+    const accentMap = {
+      fruit: 'rgba(110, 146, 41, 0.24)',
+      vegetables: 'rgba(60, 111, 60, 0.24)',
+      vegetable: 'rgba(60, 111, 60, 0.24)',
+      juices: 'rgba(29, 105, 118, 0.24)',
+      juice: 'rgba(29, 105, 118, 0.24)',
+      pulses: 'rgba(161, 107, 25, 0.24)',
+      pulses: 'rgba(161, 107, 25, 0.24)',
+      cereals: 'rgba(166, 106, 31, 0.24)',
+      dairy: 'rgba(12, 88, 95, 0.24)',
+      snacks: 'rgba(196, 91, 128, 0.24)',
+      masala: 'rgba(159, 62, 26, 0.24)',
+      'dry fruits & nuts': 'rgba(125, 90, 45, 0.24)',
+      'dryfruits&nuts': 'rgba(125, 90, 45, 0.24)',
+      pickles: 'rgba(106, 143, 38, 0.24)',
+      icecream: 'rgba(108, 125, 167, 0.24)',
+      cakes: 'rgba(200, 82, 122, 0.24)',
+      fastfood: 'rgba(222, 122, 30, 0.24)',
+      streetfood: 'rgba(209, 68, 27, 0.24)',
+    };
+
+    const key = String(category || '').trim().toLowerCase().replace(/[^a-z0-9]/g, '');
+    return accentMap[key] || 'rgba(217, 180, 92, 0.24)';
+  };
+
+  const handleTrendingProductClick = (product) => {
+    setActiveTrendingProductId(product.id);
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => setActiveTrendingProductId(null), 420);
+    }
+    setSelected360Product(product);
   };
 
   const handleAddToCart = (productId) => {
@@ -1224,6 +1286,11 @@ function App() {
         isAuthenticated={Boolean(authUser)}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
+        onSearchChange={handleSearchChange}
+        onSearchSelect={(item) => {
+          setSelectedProductId(item?.id ?? null);
+          setSearchTerm(item?.name ?? '');
+        }}
       />
 
       <main>
@@ -1235,7 +1302,12 @@ function App() {
               <div className="empty-state">Loading trending products...</div>
             ) : (
               trendingProducts.map((product) => (
-                <article className="trending-card" key={product.id} onClick={() => setSelected360Product(product)} style={{ cursor: 'pointer' }}>
+                <article
+                  className={`trending-card${activeTrendingProductId === product.id ? ' trending-card--active' : ''}`}
+                  key={product.id}
+                  onClick={() => handleTrendingProductClick(product)}
+                  style={{ cursor: 'pointer', '--trending-accent': getTrendingAccent(product.category) }}
+                >
                   <div className="product-visual">
                     <img src={product.imageUrl || FALLBACK_IMAGE} alt={product.name || 'Product image'} />
                   </div>
@@ -1479,15 +1551,6 @@ function App() {
           </div>
         </section>
       </main>
-
-      {cartOpen ? (
-        <button
-          type="button"
-          className="cart-backdrop"
-          aria-label="Close cart drawer"
-          onClick={() => setCartOpen(false)}
-        />
-      ) : null}
 
       <aside className={`cart-drawer${cartOpen ? ' open' : ''}`} aria-label="Shopping cart" aria-hidden={!cartOpen}>
           <div className="cart-drawer-header">
