@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 const CATEGORY_SECTIONS = [
   {
@@ -170,8 +170,30 @@ const CATEGORY_SECTIONS = [
     items: ['Pani Puri', 'Kathi Roll', 'Vada Pav', 'Samosa', 'Pakoras', 'Chaat'],
   },
 ];
-
 const CATEGORY_SPOTLIGHTS = ['🍎', '🥦', '🥤', '🫘', '🥛', '🌶️', '🎂', '🍦'];
+
+const SECTION_ACCENTS = {
+  fruit: 'rgba(110, 146, 41, 0.24)',
+  vegetable: 'rgba(60, 111, 60, 0.24)',
+  juice: 'rgba(29, 105, 118, 0.24)',
+  pulse: 'rgba(161, 107, 25, 0.24)',
+  cereal: 'rgba(166, 106, 31, 0.24)',
+  dairy: 'rgba(12, 88, 95, 0.24)',
+  snack: 'rgba(196, 91, 128, 0.24)',
+  masala: 'rgba(159, 62, 26, 0.24)',
+  dryfruitsnuts: 'rgba(125, 90, 45, 0.24)',
+  pickles: 'rgba(106, 143, 38, 0.24)',
+  icecream: 'rgba(108, 125, 167, 0.24)',
+  cakes: 'rgba(200, 82, 122, 0.24)',
+  fastfood: 'rgba(222, 122, 30, 0.24)',
+  streetfood: 'rgba(209, 68, 27, 0.24)',
+};
+
+const normalizeCategoryId = (value) =>
+  String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
 
 function scrollToSection(sectionId) {
   if (typeof document === 'undefined') {
@@ -182,6 +204,18 @@ function scrollToSection(sectionId) {
 }
 
 function ExploreCategories({ onNavigateHome, onNavigateProducts, onNavigateHistory, onNavigateContact, onJumpToProducts }) {
+  const [activeSection, setActiveSection] = useState(null);
+
+  const handleJumpClick = (sectionId) => {
+    setActiveSection(sectionId);
+    if (onJumpToProducts) {
+      setTimeout(() => onJumpToProducts(sectionId), 260);
+    }
+    if (typeof window !== 'undefined') {
+      window.setTimeout(() => setActiveSection(null), 520);
+    }
+  };
+
   return (
     <>
       <header className="hero explore-hero" id="explore-categories">
@@ -253,9 +287,10 @@ function ExploreCategories({ onNavigateHome, onNavigateProducts, onNavigateHisto
         <div className="container explore-sections">
           {CATEGORY_SECTIONS.map((section, index) => (
             <article
-              className={`explore-category-section${index % 2 === 1 ? ' explore-category-section--reverse' : ''}`}
+              className={`explore-category-section${index % 2 === 1 ? ' explore-category-section--reverse' : ''}${activeSection === section.id ? ' explore-category-section--active' : ''}`}
               id={section.id}
               key={section.id}
+              style={{ '--explore-accent': SECTION_ACCENTS[normalizeCategoryId(section.id)] || 'rgba(109, 143, 45, 0.22)' }}
             >
               <div className="explore-category-copy">
                 <p className="eyebrow">{section.badge}</p>
@@ -273,7 +308,11 @@ function ExploreCategories({ onNavigateHome, onNavigateProducts, onNavigateHisto
                   <strong>{section.price}</strong>
                 </div>
 
-                <button type="button" className="primary-cta explore-shop-btn" onClick={() => onJumpToProducts?.(section.id)}>
+                <button
+                  type="button"
+                  className="primary-cta explore-shop-btn"
+                  onClick={() => handleJumpClick(section.id)}
+                >
                   {section.ctaLabel} →
                 </button>
               </div>
