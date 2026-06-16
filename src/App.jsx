@@ -990,6 +990,12 @@ function App() {
       return;
     }
 
+    // Strict: prevent starting an order unless user is authenticated
+    if (!authUser) {
+      window.alert('Please sign up to place an order');
+      return;
+    }
+
     setPendingOrder({
       source: 'single',
       items: [
@@ -1011,6 +1017,12 @@ function App() {
   };
 
   const openOtpModal = () => {
+    // Strict: require authentication before proceeding to checkout
+    if (!authUser) {
+      window.alert('Please sign up to place an order');
+      return;
+    }
+
     if (cartEntries.length === 0) {
       pushSnackbar('Your cart is empty');
       return;
@@ -1159,8 +1171,8 @@ function App() {
       if (normalizedMessage.includes('invalid login credentials')) {
         setAuthError(
           usingFallbackSupabaseConfig
-            ? 'Invalid login credentials for the fallback Supabase project. Make sure this email/password belongs to the same project, or set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY for your own project.'
-            : 'Invalid login credentials. Double-check the email/password, or sign up first if this account does not exist yet.',
+            ? 'Quickly signup to have your order'
+            : 'Quickly signup to have your order',
         );
       } else if (normalizedMessage.includes('email not confirmed')) {
         setAuthError('Your account was created, but the email is not verified yet. Check your inbox and confirm it, then log in again.');
@@ -1763,7 +1775,11 @@ function App() {
                     className="password-toggle-btn"
                     aria-pressed={authPasswordVisible}
                     aria-label={authPasswordVisible ? 'Hide password' : 'Show password'}
-                    onClick={() => setAuthPasswordVisible(!authPasswordVisible)}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      setAuthPasswordVisible((previous) => !previous);
+                    }}
                   >
                     {/* Prefer user-provided icons in public/icons/, fallback to emoji if missing */}
                     <img
@@ -1783,7 +1799,7 @@ function App() {
 
               {authError ? <p className="auth-message auth-error">{authError}</p> : null}
               <div className="auth-message auth-account-actions">
-                <span>{authUser ? `Signed in as ${accountLabel}` : 'No account active.'}</span>
+                <span>{authUser ? `Signed in as ${accountLabel}` : 'Quickly signup to have your order'}</span>
                 {authUser ? (
                   <button type="button" className="link-button auth-link" onClick={handleLogout}>
                     Logout

@@ -20,6 +20,8 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-y: scroll;
+  min-height: 100%;
 }
 
 body {
@@ -27,6 +29,12 @@ body {
   font-family: 'Inter', sans-serif;
   color: var(--text);
   background: #fff;
+  min-height: 100vh;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  min-height: 100vh;
+  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
@@ -41,63 +49,50 @@ input {
   font: inherit;
 }
 
-/* Positioning and sizing for password toggle (icon fits input box) */
-.password-field {
-  position: relative;
-  display: block;
-}
-
-.password-field input {
-  padding-right: 48px; /* reserve space for the toggle */
-}
-
-.password-toggle-btn {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  border: 0;
-  background: none; /* ensure no visible background */
-  padding: 0; /* remove inner box padding */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: calc(100% - 8px);
-  width: 34px;
-  box-shadow: none; /* remove any shadow that creates a box */
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.password-toggle-btn img {
-  width: 18px;
-  height: 18px;
-  display: block;
-  max-height: 100%;
-}
-
-.password-toggle-btn:focus {
-  outline: none; /* remove default focus rectangle */
-}
-
-.password-toggle-btn:focus-visible {
-  outline: 2px solid rgba(0,0,0,0.08);
-  outline-offset: 2px;
-}
-
 button {
 }
 
 button,
 a,
-.tap-action {
-  transition: transform 0.22s ease, box-shadow 0.22s ease, opacity 0.22s ease;
+.tap-action,
+.cart-drawer-toggle,
+.auth-link-button,
+.cart-icon-button,
+.link-button,
+.icon-button,
+.sort-button,
+.wishlist-toggle-btn,
+.add-cart-btn,
+.remove-cart-btn,
+.primary-cta,
+.secondary-cta,
+.auth-mode-btn,
+.cart-drawer-close {
+  transition: box-shadow 0.22s ease, opacity 0.22s ease;
+  transform: none !important;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }
 
 button:active,
 a:active,
-.tap-action:active {
-  transform: translateY(1px) scale(0.96);
+.tap-action:active,
+.cart-drawer-toggle:active,
+.auth-link-button:active,
+.cart-icon-button:active,
+.link-button:active,
+.icon-button:active,
+.sort-button:active,
+.wishlist-toggle-btn:active,
+.add-cart-btn:active,
+.remove-cart-btn:active,
+.primary-cta:active,
+.secondary-cta:active,
+.auth-mode-btn:active,
+.cart-drawer-close:active {
+  opacity: 0.92;
+  transform: none !important;
 }
 
 @keyframes click-bounce {
@@ -1685,7 +1680,7 @@ a {
 }
 
 .password-toggle-btn {
-  flex: 0 0 40px;
+  flex: 0 0 44px;
   height: 36px;
   display: inline-flex;
   align-items: center;
@@ -1696,6 +1691,9 @@ a {
   font-size: 16px;
   line-height: 1;
   padding: 0 8px; /* small horizontal padding so icon isn't flush */
+  cursor: pointer;
+  touch-action: manipulation;
+  pointer-events: auto;
 }
 
 .password-toggle-btn:active {
