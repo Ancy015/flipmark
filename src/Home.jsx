@@ -140,7 +140,7 @@ function Home({
             </div>
           </div>
               <div>
-                <strong>24hrs</strong>
+                <strong>24hours</strong>
                 <span>Fresh dispatch</span>
               </div>
               <div>
